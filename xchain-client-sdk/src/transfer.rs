@@ -1,10 +1,6 @@
-use crate::{
-    config, consts,
-    errors::{Error, ErrorKind, Result},
-    protos,
-    session, wallet,
-    xchain
-};
+use crate::{config, consts, protos, session, wallet};
+use crate::errors::{Error, ErrorKind, Result};
+use crate::xchain;
 
 /// account在chain上面给to转账amount，小费是fee，留言是desc
 pub fn transfer(
@@ -74,7 +70,6 @@ pub fn transfer(
 
 #[cfg(test)]
 mod tests {
-
     use std::path::PathBuf;
 
     #[test]

@@ -1,10 +1,11 @@
+use rand::rngs::StdRng;
+use rand_core::{RngCore, SeedableRng};
+use xchain_crypto::sign::ecdsa::KeyPair;
+
 /// 保管私钥，提供签名和验签
 /// 要在TEE里面运行
 /// 唯一可以调用xchain_crypto的地方
 use crate::errors::*;
-use rand::rngs::StdRng;
-use rand_core::{RngCore, SeedableRng};
-use xchain_crypto::sign::ecdsa::KeyPair;
 
 /// 加载钱包地址或者加载enclave
 #[derive(Default, Debug)]
@@ -71,8 +72,9 @@ pub fn get_nonce() -> Result<String> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use std::path::PathBuf;
+
+    use super::*;
 
     #[test]
     fn test_load_account() {

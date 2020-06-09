@@ -1,11 +1,10 @@
-use num_traits;
-use num_bigint;
-use serde_json;
-
 use std::ops::AddAssign;
 use std::ops::Sub;
-use num_traits::cast::FromPrimitive;
 
+use num_bigint;
+use num_traits;
+use num_traits::cast::FromPrimitive;
+use serde_json;
 
 use crate::config;
 use crate::errors::{Error, ErrorKind, Result};
@@ -125,7 +124,7 @@ impl<'a, 'b, 'c> Session<'a, 'b, 'c> {
                 .compliance_check
                 .compliance_check_endorse_service_fee as i64,
         )
-        .ok_or(Error::from(ErrorKind::ParseError))?;
+            .ok_or(Error::from(ErrorKind::ParseError))?;
 
         let (tx_inputs, tx_output) = self.generate_tx_input(resp.get_utxoOutput(), &total_need)?;
         let mut tx_outputs = self.generate_tx_output(

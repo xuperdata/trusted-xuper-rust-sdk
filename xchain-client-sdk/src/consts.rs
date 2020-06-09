@@ -1,8 +1,10 @@
-use crate::errors::{Error, ErrorKind, Result};
-use num_traits::identities::Zero;
-use num_traits;
-use num_bigint;
 use std::str::FromStr;
+
+use num_bigint;
+use num_traits;
+use num_traits::identities::Zero;
+
+use crate::errors::{Error, ErrorKind, Result};
 
 #[allow(non_upper_case_globals)]
 pub const TXVersion: i32 = 1;
