@@ -88,7 +88,7 @@ mod tests {
         );
         let to = "dpzuVdosQrF2kmzumhVeFQZa1aYcdgFpN".to_string();
         let bcname = String::from("xuper");
-        let chain = super::session::ChainClient::new(&bcname);
+        let chain = super::xchain::XChainClient::new(&bcname);
         let amount = "1401".to_string();
         let fee = "0".to_string();
         let desc = "test duanbing".to_string();

@@ -117,6 +117,7 @@ impl From<xchain_crypto::errors::Error> for Error {
     }
 }
 
+
 impl From<std::io::Error> for Error {
     #[inline]
     fn from(err: std::io::Error) -> Error {

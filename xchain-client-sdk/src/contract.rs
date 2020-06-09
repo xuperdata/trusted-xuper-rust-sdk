@@ -142,7 +142,7 @@ mod tests {
             "XC1111111111000000@xuper",
         );
         let bcname = String::from("xuper");
-        let chain = super::session::ChainClient::new(&bcname);
+        let chain = super::xchain::XChainClient::new(&bcname);
         let mn = String::from("increase");
 
         let mut args = HashMap::new();
@@ -171,7 +171,7 @@ mod tests {
             "XC1111111111000000@xuper",
         );
         let bcname = String::from("xuper");
-        let chain = super::session::ChainClient::new(&bcname);
+        let chain = super::xchain::XChainClient::new(&bcname);
         let mn = String::from("get");
         let mut args = HashMap::new();
         args.insert(String::from("key"), String::from("counter").into_bytes());

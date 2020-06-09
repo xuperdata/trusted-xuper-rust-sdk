@@ -28,6 +28,7 @@ impl CryptoType {
     }
 }
 
+#[allow(type_alias_bounds)]
 pub type PublicKey<'a, B: AsRef<[u8]>> = crate::sign::ecdsa::UnparsedPublicKey<&'a B>;
 
 pub fn get_address_from_public_keys<B: AsRef<[u8]>>(keys: &[PublicKey<B>]) -> Result<String> {
