@@ -54,6 +54,7 @@ impl<'a, 'b, 'c> Session<'a, 'b, 'c> {
 
         let pre_exec_with_select_utxo_resp: xchain::PreExecWithSelectUTXOResponse =
             serde_json::from_slice(&resp.ResponseData)?;
+
         self.client.check_resp_code(
             pre_exec_with_select_utxo_resp
                 .get_response()

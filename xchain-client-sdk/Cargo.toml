@@ -6,7 +6,7 @@ edition = "2018"
 
 [dependencies]
 xchain_crypto    = { path = "../xchain-crypto"}
-xchain_node_sdk    = { path = "../xchain-node-sdk"}
+xchain_node_sdk  = { path = "../xchain-node-sdk"}
 
 rand             = "0.7.3"
 rand_core        = "0.5.1"
