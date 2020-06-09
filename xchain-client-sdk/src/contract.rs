@@ -161,6 +161,7 @@ mod tests {
         println!("{:?}", res.unwrap());
     }
 
+
     #[test]
     fn test_query() {
         let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
