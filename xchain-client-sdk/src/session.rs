@@ -41,7 +41,6 @@ impl<'a, 'b, 'c> Session<'a, 'b, 'c> {
         }
     }
 
-
     pub fn pre_exec_with_select_utxo(
         &self,
         pre_sel_utxo_req: xchain::PreExecWithSelectUTXORequest,
