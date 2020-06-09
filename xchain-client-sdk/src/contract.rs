@@ -83,6 +83,7 @@ pub fn query_contract(
     method_name: &String,
     args: std::collections::HashMap<String, Vec<u8>>,
 ) -> Result<protos::xchain::InvokeRPCResponse> {
+
     let mut invoke_req = protos::xchain::InvokeRequest::new();
     invoke_req.set_module_name(String::from("wasm"));
     invoke_req.set_contract_name(account.contract_name.to_owned());
@@ -124,7 +125,7 @@ pub fn query_contract(
     };
 
     let sess = session::Session::new(client, account, &msg);
-    sess.pre_exec(invoke_rpc_request)
+    sess.client.pre_exec(invoke_rpc_request)
 }
 
 #[cfg(test)]

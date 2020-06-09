@@ -1,5 +1,3 @@
-use futures::executor;
-
 use num_traits;
 use num_bigint;
 use serde_json;
@@ -27,7 +25,7 @@ pub struct Message {
 }
 
 pub struct Session<'a, 'b, 'c> {
-    client: &'a XChainClient,
+    pub client: &'a XChainClient,
 
     account: &'b super::wallet::Account,
 
@@ -43,22 +41,6 @@ impl<'a, 'b, 'c> Session<'a, 'b, 'c> {
         }
     }
 
-    fn call(&self, r: xendorser::EndorserRequest) -> Result<xendorser::EndorserResponse> {
-        let resp = self
-            .client
-            .endorser
-            .endorser_call(grpc::RequestOptions::new(), r)
-            .drop_metadata();
-        Ok(executor::block_on(resp)?)
-    }
-    fn check_resp_code(&self, resp: &[xchain::ContractResponse]) -> Result<()> {
-        for i in resp.iter() {
-            if i.status > 400 {
-                return Err(Error::from(ErrorKind::ContractCodeGT400));
-            }
-        }
-        Ok(())
-    }
 
     pub fn pre_exec_with_select_utxo(
         &self,
@@ -69,11 +51,11 @@ impl<'a, 'b, 'c> Session<'a, 'b, 'c> {
         endorser_request.set_RequestName(String::from("PreExecWithFee"));
         endorser_request.set_BcName(self.client.chain_name.to_owned());
         endorser_request.set_RequestData(request_data.into_bytes());
-        let resp = self.call(endorser_request)?;
+        let resp = self.client.call(endorser_request)?;
 
         let pre_exec_with_select_utxo_resp: xchain::PreExecWithSelectUTXOResponse =
             serde_json::from_slice(&resp.ResponseData)?;
-        self.check_resp_code(
+        self.client.check_resp_code(
             pre_exec_with_select_utxo_resp
                 .get_response()
                 .get_responses(),
@@ -277,37 +259,8 @@ impl<'a, 'b, 'c> Session<'a, 'b, 'c> {
         endorser_request.set_BcName(self.client.chain_name.to_owned());
         endorser_request.set_Fee(fee.clone());
         endorser_request.set_RequestData(request_data.into_bytes());
-        let resp = self.call(endorser_request)?;
+        let resp = self.client.call(endorser_request)?;
         Ok(resp.EndorserSign.unwrap())
-    }
-
-    #[allow(dead_code)]
-    fn print_tx(&self, tx: &xchain::Transaction) {
-        for i in tx.tx_inputs.iter() {
-            crate::consts::print_bytes_num(&i.amount);
-        }
-        for i in tx.tx_outputs.iter() {
-            crate::consts::print_bytes_num(&i.amount);
-        }
-    }
-
-    pub fn post_tx(&self, tx: &xchain::Transaction) -> Result<()> {
-        let mut tx_status = xchain::TxStatus::new();
-        tx_status.set_bcname(self.client.chain_name.to_owned());
-        tx_status.set_status(xchain::TransactionStatus::UNCONFIRM);
-        tx_status.set_tx(tx.clone());
-        tx_status.set_txid(tx.txid.clone());
-        let resp = self
-            .client
-            .xchain
-            .post_tx(grpc::RequestOptions::new(), tx_status)
-            .drop_metadata();
-        let resp = executor::block_on(resp).unwrap();
-        if resp.get_header().error != xchain::XChainErrorEnum::SUCCESS {
-            println!("post tx failed, {:?}", resp);
-            return Err(Error::from(ErrorKind::ParseError));
-        }
-        Ok(())
     }
 
     pub fn gen_complete_tx_and_post(
@@ -320,40 +273,21 @@ impl<'a, 'b, 'c> Session<'a, 'b, 'c> {
 
         tx.auth_require_signs.push(end_sign);
         tx.set_txid(super::encoder::make_transaction_id(&tx)?);
-        self.post_tx(&tx)?;
+        self.client.post_tx(&tx)?;
         Ok(hex::encode(tx.txid))
     }
-    pub fn query_tx(&self, txid: &String) -> Result<xchain::TxStatus> {
-        let mut tx_status = xchain::TxStatus::new();
-        tx_status.set_bcname(self.client.chain_name.to_owned());
-        tx_status.set_txid(hex::decode(txid)?);
-        let resp = self
-            .client
-            .xchain
-            .query_tx(grpc::RequestOptions::new(), tx_status)
-            .drop_metadata();
-        let resp = executor::block_on(resp).unwrap();
 
-        if resp.get_header().error != xchain::XChainErrorEnum::SUCCESS {
-            return Err(Error::from(ErrorKind::ChainRPCError));
+    #[allow(dead_code)]
+    fn print_tx(&self, tx: &xchain::Transaction) {
+        for i in tx.tx_inputs.iter() {
+            crate::consts::print_bytes_num(&i.amount);
         }
-        // TODO check txid if null
-        Ok(resp)
+        for i in tx.tx_outputs.iter() {
+            crate::consts::print_bytes_num(&i.amount);
+        }
     }
 
-    pub fn pre_exec(
-        &self,
-        invoke_rpc_req: xchain::InvokeRPCRequest,
-    ) -> Result<xchain::InvokeRPCResponse> {
-        let resp = self
-            .client
-            .xchain
-            .pre_exec(grpc::RequestOptions::new(), invoke_rpc_req)
-            .drop_metadata();
-        let resp = executor::block_on(resp).unwrap();
-        self.check_resp_code(resp.get_response().get_responses())?;
-        Ok(resp)
-    }
+
     //TODO
     //pub fn get_balance() -> Result<String> {}
 }

@@ -1092,6 +1092,7 @@ name = "xchain_node_sdk"
 version = "0.1.0"
 dependencies = [
  "base64 0.12.1",
+ "futures",
  "grpc",
  "grpc-protobuf",
  "hex",
@@ -1113,9 +1114,6 @@ dependencies = [
 name = "xuper-client-sdk"
 version = "0.1.0"
 dependencies = [
- "base64 0.12.1",
- "futures",
- "grpc",
  "hex",
  "num-bigint",
  "num-traits",
