@@ -144,8 +144,8 @@ mod tests {
         );
         let bcname = String::from("xuper");
         let chain = super::xchain::XChainClient::new(&bcname);
-        let mn = String::from("increase");
 
+        let mn = String::from("increase");
         let mut args = HashMap::new();
         args.insert(String::from("key"), String::from("counter").into_bytes());
 
