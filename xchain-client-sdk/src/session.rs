@@ -6,11 +6,12 @@ use num_traits;
 use num_traits::cast::FromPrimitive;
 use serde_json;
 
-use crate::config;
-use crate::errors::{Error, ErrorKind, Result};
-use crate::protos::xchain;
-use crate::protos::xendorser;
-use crate::xchain::XChainClient;
+use xchain_node_sdk::{
+    config, encoder,
+    errors::*,
+    ocall,
+    protos::{xchain, xendorser},
+};
 
 #[derive(Default)]
 pub struct Message {
@@ -24,7 +25,7 @@ pub struct Message {
 }
 
 pub struct Session<'a, 'b, 'c> {
-    pub client: &'a XChainClient,
+    pub chain_name: &'a String,
 
     account: &'b super::wallet::Account,
 
@@ -32,12 +33,21 @@ pub struct Session<'a, 'b, 'c> {
 }
 
 impl<'a, 'b, 'c> Session<'a, 'b, 'c> {
-    pub fn new(c: &'a XChainClient, w: &'b super::wallet::Account, m: &'c Message) -> Self {
+    pub fn new(c: &'a String, w: &'b super::wallet::Account, m: &'c Message) -> Self {
         Session {
             msg: m,
-            client: c,
+            chain_name: c,
             account: w,
         }
+    }
+
+    pub fn check_resp_code(&self, resp: &[xchain::ContractResponse]) -> Result<()> {
+        for i in resp.iter() {
+            if i.status > 400 {
+                return Err(Error::from(ErrorKind::ContractCodeGT400));
+            }
+        }
+        Ok(())
     }
 
     pub fn pre_exec_with_select_utxo(
@@ -47,14 +57,14 @@ impl<'a, 'b, 'c> Session<'a, 'b, 'c> {
         let request_data = serde_json::to_string(&pre_sel_utxo_req)?;
         let mut endorser_request = xendorser::EndorserRequest::new();
         endorser_request.set_RequestName(String::from("PreExecWithFee"));
-        endorser_request.set_BcName(self.client.chain_name.to_owned());
+        endorser_request.set_BcName(self.chain_name.to_owned());
         endorser_request.set_RequestData(request_data.into_bytes());
-        let resp = self.client.call(endorser_request)?;
+        let resp = ocall::ocall_xchain_endorser_call(self.chain_name, endorser_request)?;
 
         let pre_exec_with_select_utxo_resp: xchain::PreExecWithSelectUTXOResponse =
             serde_json::from_slice(&resp.ResponseData)?;
 
-        self.client.check_resp_code(
+        self.check_resp_code(
             pre_exec_with_select_utxo_resp
                 .get_response()
                 .get_responses(),
@@ -124,7 +134,7 @@ impl<'a, 'b, 'c> Session<'a, 'b, 'c> {
                 .compliance_check
                 .compliance_check_endorse_service_fee as i64,
         )
-            .ok_or(Error::from(ErrorKind::ParseError))?;
+        .ok_or(Error::from(ErrorKind::ParseError))?;
 
         let (tx_inputs, tx_output) = self.generate_tx_input(resp.get_utxoOutput(), &total_need)?;
         let mut tx_outputs = self.generate_tx_output(
@@ -157,7 +167,7 @@ impl<'a, 'b, 'c> Session<'a, 'b, 'c> {
         tx.set_initiator(self.msg.initiator.to_owned());
         tx.set_nonce(super::wallet::get_nonce()?);
 
-        let digest_hash = super::encoder::make_tx_digest_hash(&tx)?;
+        let digest_hash = encoder::make_tx_digest_hash(&tx)?;
 
         //sign the digest_hash
         let sig = self.account.sign(&digest_hash)?;
@@ -166,7 +176,7 @@ impl<'a, 'b, 'c> Session<'a, 'b, 'c> {
         signature_info.set_Sign(sig);
         let signature_infos = vec![signature_info; 1];
         tx.set_initiator_signs(protobuf::RepeatedField::from_vec(signature_infos));
-        tx.set_txid(super::encoder::make_transaction_id(&tx)?);
+        tx.set_txid(encoder::make_transaction_id(&tx)?);
         Ok(tx)
     }
 
@@ -226,7 +236,7 @@ impl<'a, 'b, 'c> Session<'a, 'b, 'c> {
         tx.set_tx_outputs_ext(resp.get_response().outputs.clone());
         tx.set_contract_requests(resp.get_response().requests.clone());
 
-        let digest_hash = super::encoder::make_tx_digest_hash(&tx)?;
+        let digest_hash = encoder::make_tx_digest_hash(&tx)?;
 
         //sign the digest_hash
         let sig = self.account.sign(&digest_hash)?;
@@ -240,7 +250,7 @@ impl<'a, 'b, 'c> Session<'a, 'b, 'c> {
             tx.set_auth_require_signs(protobuf::RepeatedField::from_vec(signature_infos));
         }
 
-        tx.set_txid(super::encoder::make_transaction_id(&tx)?);
+        tx.set_txid(encoder::make_transaction_id(&tx)?);
         Ok(tx)
     }
 
@@ -250,15 +260,15 @@ impl<'a, 'b, 'c> Session<'a, 'b, 'c> {
         fee: &xchain::Transaction,
     ) -> Result<xchain::SignatureInfo> {
         let mut tx_status = xchain::TxStatus::new();
-        tx_status.set_bcname(self.client.chain_name.to_owned());
+        tx_status.set_bcname(self.chain_name.to_owned());
         tx_status.set_tx(tx.clone());
         let request_data = serde_json::to_string(&tx_status)?;
         let mut endorser_request = xendorser::EndorserRequest::new();
         endorser_request.set_RequestName(String::from("ComplianceCheck"));
-        endorser_request.set_BcName(self.client.chain_name.to_owned());
+        endorser_request.set_BcName(self.chain_name.to_owned());
         endorser_request.set_Fee(fee.clone());
         endorser_request.set_RequestData(request_data.into_bytes());
-        let resp = self.client.call(endorser_request)?;
+        let resp = ocall::ocall_xchain_endorser_call(self.chain_name, endorser_request)?;
         Ok(resp.EndorserSign.unwrap())
     }
 
@@ -271,8 +281,8 @@ impl<'a, 'b, 'c> Session<'a, 'b, 'c> {
         let end_sign = self.compliance_check(&tx, &cctx)?;
 
         tx.auth_require_signs.push(end_sign);
-        tx.set_txid(super::encoder::make_transaction_id(&tx)?);
-        self.client.post_tx(&tx)?;
+        tx.set_txid(encoder::make_transaction_id(&tx)?);
+        ocall::ocall_xchain_post_tx(self.chain_name, &tx)?;
         Ok(hex::encode(tx.txid))
     }
 
@@ -285,7 +295,6 @@ impl<'a, 'b, 'c> Session<'a, 'b, 'c> {
             crate::consts::print_bytes_num(&i.amount);
         }
     }
-
 
     //TODO
     //pub fn get_balance() -> Result<String> {}

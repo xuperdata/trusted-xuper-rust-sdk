@@ -5,7 +5,7 @@ fn main() {
         .input("protos/chainedbft.proto")
         .input("protos/xendorser.proto")
         .input("protos/xchain.proto")
-        .includes(&["src/protos"])
+        .includes(&["protos"])
         .rust_protobuf(true)
         .rust_protobuf_customize(protoc_rust::Customize{serde_derive: Some(true),..Default::default()})
         .run()

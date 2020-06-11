@@ -1,11 +1,10 @@
-use crate::{config, consts, protos, session, wallet};
-use crate::errors::{Error, ErrorKind, Result};
-use crate::xchain;
+use crate::{consts, session, wallet};
+use xchain_node_sdk::{config, errors::*, protos};
 
 /// account在chain上面给to转账amount，小费是fee，留言是desc
 pub fn transfer(
     account: &wallet::Account,
-    chain: &xchain::XChainClient,
+    chain_name: &String,
     to: &String,
     amount: &String,
     fee: &String,
@@ -42,13 +41,13 @@ pub fn transfer(
     }
 
     let mut invoke_rpc_request = protos::xchain::InvokeRPCRequest::new();
-    invoke_rpc_request.set_bcname(chain.chain_name.to_owned());
+    invoke_rpc_request.set_bcname(chain_name.to_owned());
     invoke_rpc_request.set_requests(protobuf::RepeatedField::from_vec(vec![]));
     invoke_rpc_request.set_initiator(account.address.to_owned());
     invoke_rpc_request.set_auth_require(protobuf::RepeatedField::from_vec(auth_requires.clone()));
 
     let mut pre_sel_utxo_req = protos::xchain::PreExecWithSelectUTXORequest::new();
-    pre_sel_utxo_req.set_bcname(chain.chain_name.to_owned());
+    pre_sel_utxo_req.set_bcname(chain_name.to_owned());
     pre_sel_utxo_req.set_address(account.address.to_owned());
     pre_sel_utxo_req.set_totalAmount(total_amount);
     pre_sel_utxo_req.set_request(invoke_rpc_request.clone());
@@ -63,7 +62,7 @@ pub fn transfer(
         initiator: account.address.to_owned(),
     };
 
-    let sess = session::Session::new(chain, account, &msg);
+    let sess = session::Session::new(chain_name, account, &msg);
     let mut pre_exe_with_sel_res = sess.pre_exec_with_select_utxo(pre_sel_utxo_req)?;
     sess.gen_complete_tx_and_post(&mut pre_exe_with_sel_res)
 }
@@ -71,6 +70,7 @@ pub fn transfer(
 #[cfg(test)]
 mod tests {
     use std::path::PathBuf;
+    use xchain_node_sdk::ocall;
 
     #[test]
     fn test_transfer() {
@@ -83,20 +83,18 @@ mod tests {
         );
         let to = "dpzuVdosQrF2kmzumhVeFQZa1aYcdgFpN".to_string();
         let bcname = String::from("xuper");
-        let chain = super::xchain::XChainClient::new(&bcname);
+        //let chain = xchain::XChainClient::new(&bcname);
         let amount = "1401".to_string();
         let fee = "0".to_string();
         let desc = "test duanbing".to_string();
 
-        let res = super::transfer(&acc, &chain, &to, &amount, &fee, &desc);
+        let res = super::transfer(&acc, &bcname, &to, &amount, &fee, &desc);
         println!("transfer res: {:?}", res);
         assert_eq!(res.is_ok(), true);
         let txid = res.unwrap();
         println!("txid: {:?}", txid);
 
-        let msg: crate::session::Message = Default::default();
-        let sess = crate::session::Session::new(&chain, &acc, &msg);
-        let res = sess.query_tx(&txid);
+        let res = ocall::ocall_xchain_query_tx(&bcname, &txid);
         assert_eq!(res.is_ok(), true);
         println!("{:?}", res.unwrap());
     }

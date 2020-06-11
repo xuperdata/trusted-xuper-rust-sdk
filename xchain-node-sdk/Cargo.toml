@@ -4,6 +4,11 @@ version = "0.1.0"
 authors = ["chenzhiyu <chen-zhiyu+chen.zhiyu@users.noreply.github.com>"]
 edition = "2018"
 
+#[lib]
+#crate-type = ["staticlib"]
+#name = "teaclave_binder"
+#path = "src/ocall.rs"
+
 [features]
 default = ["with-serde"]
 with-serde = []
@@ -28,6 +33,7 @@ futures          = "~0.3"
 grpc             = "0.8.0"
 grpc-protobuf    = "0.8.0"
 protobuf         = { version = "2.14.0", features = ["with-serde"] }
+libc            = "0.2"
 
 [build-dependencies]
 protoc-rust      = "2.14.0"

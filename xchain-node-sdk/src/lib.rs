@@ -9,10 +9,10 @@ extern crate lazy_static;
 #[macro_use]
 extern crate serde_derive;
 
-pub mod errors;
-pub mod encoder;
+mod xchain;
+
 pub mod config;
+pub mod encoder;
+pub mod errors;
+pub mod ocall;
 pub mod protos;
-pub mod xchain;
-
-
