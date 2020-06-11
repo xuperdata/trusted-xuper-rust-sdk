@@ -1,12 +1,9 @@
 use futures::executor;
-use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use grpc::ClientStubExt;
 
-use crate::config;
-use crate::protos::{xchain_grpc, xchain, xendorser};
+use crate::errors::{Error, ErrorKind, Result};
 use crate::protos::xendorser_grpc;
-use crate::errors::{Result, Error, ErrorKind};
-
+use crate::protos::{xchain, xchain_grpc, xendorser};
 
 pub struct XChainClient {
     pub chain_name: String,
@@ -18,21 +15,15 @@ pub struct XChainClient {
 
 #[allow(dead_code)]
 impl XChainClient {
-    pub fn new(bcname: &String) -> Self {
-        let host = config::CONFIG.read().unwrap().node.clone();
-        let port = config::CONFIG.read().unwrap().endorse_port;
-        let port_xchain = config::CONFIG.read().unwrap().node_port;
-
+    pub fn new(bcname: &String, host: &String, port: u16) -> Self {
         //TODO: 设置超时，以及body大小
         let client_conf = Default::default();
-        let client_endorser =
-            xendorser_grpc::xendorserClient::new_plain(host.as_str(), port, client_conf)
-                .expect("new connection");
+        let client_endorser = xendorser_grpc::xendorserClient::new_plain(host, port, client_conf)
+            .expect("new connection");
 
         let client_conf = Default::default();
         let client_xchain =
-            xchain_grpc::XchainClient::new_plain(host.as_str(), port_xchain, client_conf)
-                .expect("new connection");
+            xchain_grpc::XchainClient::new_plain(host, port, client_conf).expect("new connection");
 
         XChainClient {
             chain_name: bcname.to_owned(),

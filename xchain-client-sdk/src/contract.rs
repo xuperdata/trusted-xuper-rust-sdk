@@ -1,6 +1,6 @@
+use super::config;
 use crate::{session, wallet};
-use xchain_node_sdk::{config, errors::Result, ocall, protos};
-
+use xchain_node_sdk::{errors::Result, ocall, protos};
 /// account在chain上面给to转账amount，小费是fee，留言是des, ocallc
 pub fn invoke_contract(
     account: &wallet::Account,
@@ -126,11 +126,14 @@ pub fn query_contract(
 
     let sess = session::Session::new(chain_name, account, &msg);
     */
-    ocall::ocall_xchain_pre_exec(chain_name, invoke_rpc_request)
+    let host = config::CONFIG.read().unwrap().node.clone();
+    let port = config::CONFIG.read().unwrap().endorse_port;
+    ocall::ocall_xchain_pre_exec(chain_name, &host, port, invoke_rpc_request)
 }
 
 #[cfg(test)]
 mod tests {
+    use super::config;
     use std::collections::HashMap;
     use std::path::PathBuf;
     use xchain_node_sdk::ocall;
@@ -156,7 +159,9 @@ mod tests {
         assert_eq!(txid.is_ok(), true);
         let txid = txid.unwrap();
 
-        let res = ocall::ocall_xchain_query_tx(&bcname, &txid);
+        let host = config::CONFIG.read().unwrap().node.clone();
+        let port = config::CONFIG.read().unwrap().endorse_port;
+        let res = ocall::ocall_xchain_query_tx(&bcname, &host, port, &txid);
         assert_eq!(res.is_ok(), true);
         println!("{:?}", res.unwrap());
     }

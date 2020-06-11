@@ -1,5 +1,5 @@
-use crate::{consts, session, wallet};
-use xchain_node_sdk::{config, errors::*, protos};
+use crate::{config, consts, session, wallet};
+use xchain_node_sdk::{errors::*, protos};
 
 /// account在chain上面给to转账amount，小费是fee，留言是desc
 pub fn transfer(
@@ -69,6 +69,7 @@ pub fn transfer(
 
 #[cfg(test)]
 mod tests {
+    use super::config;
     use std::path::PathBuf;
     use xchain_node_sdk::ocall;
 
@@ -94,7 +95,9 @@ mod tests {
         let txid = res.unwrap();
         println!("txid: {:?}", txid);
 
-        let res = ocall::ocall_xchain_query_tx(&bcname, &txid);
+        let host = config::CONFIG.read().unwrap().node.clone();
+        let port = config::CONFIG.read().unwrap().endorse_port;
+        let res = ocall::ocall_xchain_query_tx(&bcname, &host, port, &txid);
         assert_eq!(res.is_ok(), true);
         println!("{:?}", res.unwrap());
     }
