@@ -7,9 +7,7 @@ use crate::protos::{xchain, xchain_grpc, xendorser};
 
 pub struct XChainClient {
     pub chain_name: String,
-
     pub endorser: xendorser_grpc::xendorserClient,
-
     pub xchain: xchain_grpc::XchainClient,
 }
 

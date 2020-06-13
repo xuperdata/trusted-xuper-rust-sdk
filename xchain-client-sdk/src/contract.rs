@@ -126,9 +126,7 @@ pub fn query_contract(
 
     let sess = session::Session::new(chain_name, account, &msg);
     */
-    let host = config::CONFIG.read().unwrap().node.clone();
-    let port = config::CONFIG.read().unwrap().endorse_port;
-    ocall::ocall_xchain_pre_exec(chain_name, &host, port, invoke_rpc_request)
+    ocall::ocall_xchain_pre_exec(invoke_rpc_request)
 }
 
 #[cfg(test)]
@@ -140,6 +138,12 @@ mod tests {
 
     #[test]
     fn test_contract() {
+        let host = config::CONFIG.read().unwrap().node.clone();
+        let port = config::CONFIG.read().unwrap().endorse_port;
+        let bcname = String::from("xuper");
+        let res = ocall::init(&bcname, &host, port);
+        assert_eq!(res.is_ok(), true);
+
         let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
         d.push("key/private.key");
         let acc = super::wallet::Account::new(
@@ -147,7 +151,6 @@ mod tests {
             "counter327861",
             "XC1111111111000000@xuper",
         );
-        let bcname = String::from("xuper");
 
         let mn = String::from("increase");
         let mut args = HashMap::new();
@@ -159,15 +162,21 @@ mod tests {
         assert_eq!(txid.is_ok(), true);
         let txid = txid.unwrap();
 
-        let host = config::CONFIG.read().unwrap().node.clone();
-        let port = config::CONFIG.read().unwrap().endorse_port;
-        let res = ocall::ocall_xchain_query_tx(&bcname, &host, port, &txid);
+        let res = ocall::ocall_xchain_query_tx(&txid);
         assert_eq!(res.is_ok(), true);
         println!("{:?}", res.unwrap());
+
+        ocall::close();
     }
 
     #[test]
     fn test_query() {
+        let host = config::CONFIG.read().unwrap().node.clone();
+        let port = config::CONFIG.read().unwrap().endorse_port;
+        let bcname = String::from("xuper");
+        let res = ocall::init(&bcname, &host, port);
+        assert_eq!(res.is_ok(), true);
+
         let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
         d.push("key/private.key");
         let acc = super::wallet::Account::new(
@@ -175,7 +184,6 @@ mod tests {
             "counter327861",
             "XC1111111111000000@xuper",
         );
-        let bcname = String::from("xuper");
         let mn = String::from("get");
         let mut args = HashMap::new();
         args.insert(String::from("key"), String::from("counter").into_bytes());
@@ -186,5 +194,7 @@ mod tests {
             "contract query result: {}",
             std::str::from_utf8(&resp.ok().unwrap().get_response().get_response()[0]).unwrap()
         );
+
+        ocall::close();
     }
 }

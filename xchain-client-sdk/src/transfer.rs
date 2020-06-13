@@ -75,6 +75,12 @@ mod tests {
 
     #[test]
     fn test_transfer() {
+        let host = config::CONFIG.read().unwrap().node.clone();
+        let port = config::CONFIG.read().unwrap().endorse_port;
+        let bcname = String::from("xuper");
+        let res = ocall::init(&bcname, &host, port);
+        assert_eq!(res.is_ok(), true);
+
         let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
         d.push("key/private.key");
         let acc = super::wallet::Account::new(
@@ -83,8 +89,6 @@ mod tests {
             "XC1111111111000000@xuper",
         );
         let to = "dpzuVdosQrF2kmzumhVeFQZa1aYcdgFpN".to_string();
-        let bcname = String::from("xuper");
-        //let chain = xchain::XChainClient::new(&bcname);
         let amount = "1401".to_string();
         let fee = "0".to_string();
         let desc = "test duanbing".to_string();
@@ -95,10 +99,10 @@ mod tests {
         let txid = res.unwrap();
         println!("txid: {:?}", txid);
 
-        let host = config::CONFIG.read().unwrap().node.clone();
-        let port = config::CONFIG.read().unwrap().endorse_port;
-        let res = ocall::ocall_xchain_query_tx(&bcname, &host, port, &txid);
+        let res = ocall::ocall_xchain_query_tx(&txid);
         assert_eq!(res.is_ok(), true);
         println!("{:?}", res.unwrap());
+
+        ocall::close();
     }
 }

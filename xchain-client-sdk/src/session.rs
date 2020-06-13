@@ -61,10 +61,7 @@ impl<'a, 'b, 'c> Session<'a, 'b, 'c> {
         endorser_request.set_RequestName(String::from("PreExecWithFee"));
         endorser_request.set_BcName(self.chain_name.to_owned());
         endorser_request.set_RequestData(request_data.into_bytes());
-        let host = config::CONFIG.read().unwrap().node.clone();
-        let port = config::CONFIG.read().unwrap().endorse_port;
-        let resp =
-            ocall::ocall_xchain_endorser_call(self.chain_name, &host, port, endorser_request)?;
+        let resp = ocall::ocall_xchain_endorser_call(endorser_request)?;
 
         let pre_exec_with_select_utxo_resp: xchain::PreExecWithSelectUTXOResponse =
             serde_json::from_slice(&resp.ResponseData)?;
@@ -273,10 +270,7 @@ impl<'a, 'b, 'c> Session<'a, 'b, 'c> {
         endorser_request.set_BcName(self.chain_name.to_owned());
         endorser_request.set_Fee(fee.clone());
         endorser_request.set_RequestData(request_data.into_bytes());
-        let host = config::CONFIG.read().unwrap().node.clone();
-        let port = config::CONFIG.read().unwrap().endorse_port;
-        let resp =
-            ocall::ocall_xchain_endorser_call(self.chain_name, &host, port, endorser_request)?;
+        let resp = ocall::ocall_xchain_endorser_call(endorser_request)?;
         Ok(resp.EndorserSign.unwrap())
     }
 
@@ -290,9 +284,7 @@ impl<'a, 'b, 'c> Session<'a, 'b, 'c> {
 
         tx.auth_require_signs.push(end_sign);
         tx.set_txid(encoder::make_transaction_id(&tx)?);
-        let host = config::CONFIG.read().unwrap().node.clone();
-        let port = config::CONFIG.read().unwrap().endorse_port;
-        ocall::ocall_xchain_post_tx(self.chain_name, &host, port, &tx)?;
+        ocall::ocall_xchain_post_tx(&tx)?;
         Ok(hex::encode(tx.txid))
     }
 
