@@ -27,7 +27,7 @@ pub extern "C" fn ocall_xchain_endorser_call(
     en_req: xendorser::EndorserRequest,
 ) -> Result<xendorser::EndorserResponse> {
     let ptr: *mut XChainClient = CLI.load(Ordering::SeqCst) as *mut XChainClient;
-    let cli = unsafe { &mut (*ptr) };
+    let cli = unsafe { & (*ptr) };
     cli.call(en_req)
 }
 
@@ -36,7 +36,7 @@ pub extern "C" fn ocall_xchain_post_tx(
     req: &xchain::Transaction,
 ) -> Result<()> {
     let ptr: *mut XChainClient = CLI.load(Ordering::SeqCst) as *mut XChainClient;
-    let cli = unsafe { &mut (*ptr) };
+    let cli = unsafe { & (*ptr) };
     cli.post_tx(req)
 }
 
@@ -45,7 +45,7 @@ pub extern "C" fn ocall_xchain_query_tx(
     txid: &String,
 ) -> Result<xchain::TxStatus> {
     let ptr: *mut XChainClient = CLI.load(Ordering::SeqCst) as *mut XChainClient;
-    let cli = unsafe { &mut (*ptr) };
+    let cli = unsafe { & (*ptr) };
     cli.query_tx(&txid)
 }
 
@@ -54,6 +54,6 @@ pub extern "C" fn ocall_xchain_pre_exec(
     req: xchain::InvokeRPCRequest,
 ) -> Result<xchain::InvokeRPCResponse> {
     let ptr: *mut XChainClient = CLI.load(Ordering::SeqCst) as *mut XChainClient;
-    let cli = unsafe { &mut (*ptr) };
+    let cli = unsafe { & (*ptr) };
     cli.pre_exec(req)
 }
