@@ -3,10 +3,18 @@
 #![allow(dead_code)]
 #![allow(unused_imports)]
 
+#![cfg_attr(all(feature = "mesalock_sgx",
+                not(target_env = "sgx")), no_std)]
+#![cfg_attr(all(target_env = "sgx", target_vendor = "mesalock"), feature(rustc_private))]
+
+#[cfg(all(feature = "mesalock_sgx", not(target_env = "sgx")))]
+#[macro_use]
+extern crate sgx_tstd as std;
+
 #[macro_use]
 extern crate lazy_static;
 
-extern crate base58;
+extern crate rust_base58;
 extern crate num_bigint;
 extern crate num_traits;
 extern crate regex;

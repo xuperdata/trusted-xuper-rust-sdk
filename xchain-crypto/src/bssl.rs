@@ -12,6 +12,7 @@
 // OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
 // CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
+use std::prelude::v1::*;
 use crate::{c, errors};
 
 /// An `int` returned from a foreign function containing **1** if the function

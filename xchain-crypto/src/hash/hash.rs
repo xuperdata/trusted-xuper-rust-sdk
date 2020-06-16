@@ -1,3 +1,4 @@
+use std::prelude::v1::*;
 use ring::digest;
 
 pub fn double_sha256(data: &[u8]) -> Vec<u8> {

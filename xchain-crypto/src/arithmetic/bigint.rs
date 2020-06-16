@@ -35,6 +35,7 @@
 //!
 //! [Static checking of units in Servo]:
 //!     https://blog.mozilla.org/research/2014/06/23/static-checking-of-units-in-servo/
+use std::prelude::v1::*;
 
 use crate::{
     arithmetic::montgomery::*,

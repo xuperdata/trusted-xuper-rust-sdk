@@ -1,3 +1,4 @@
+use std::prelude::v1::*;
 use super::address::{self, CryptoType};
 use super::json_key;
 use crate::errors::{Error, ErrorKind, Result};

@@ -1,5 +1,7 @@
+use std::prelude::v1::*;
 use super::{Curve, ELEM_MAX_BYTES, SEED_MAX_BYTES};
 use crate::errors::*;
+use crate::errors::Result;
 
 pub struct KeyPair {
     seed: Seed,

@@ -1,8 +1,9 @@
+use std::prelude::v1::*;
 use crate::errors::{Error, ErrorKind, Result};
 use crypto::digest::Digest;
 use crypto::ripemd160::Ripemd160;
 
-use base58::{FromBase58, ToBase58};
+use rust_base58::{FromBase58, ToBase58};
 use ring::digest;
 use std::collections::HashMap;
 

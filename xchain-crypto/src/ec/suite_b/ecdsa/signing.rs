@@ -13,6 +13,7 @@
 // CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 //! ECDSA Signatures using the P-256 and P-384 curves.
+use std::prelude::v1::*;
 
 use super::digest_scalar::digest_scalar;
 use crate::{

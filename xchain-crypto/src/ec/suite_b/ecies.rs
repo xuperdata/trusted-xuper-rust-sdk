@@ -1,8 +1,10 @@
+use std::prelude::v1::*;
 use crate::arithmetic::montgomery::R;
 use crate::sign::ecdsa::EcdsaKeyPair;
 use crate::sign::ecdsa::KeyPair;
 
 use crate::errors::*;
+use crate::errors::Result;
 use crate::ring::aead::BoundKey;
 use bytes::{BufMut, BytesMut};
 use rand::Rng;

@@ -1,3 +1,4 @@
+use std::prelude::v1::*;
 use std::collections::HashMap;
 
 #[derive(Debug, Clone, Copy)]

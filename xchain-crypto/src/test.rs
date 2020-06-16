@@ -116,6 +116,7 @@
 //! (`src/example_tests.txt`), the test inputs that led to the failure, and the
 //! stack trace to the line in the test code that panicked: entry 9 in the
 //! stack trace pointing to line 652 of the file `example.rs`.
+use std::prelude::v1::*;
 
 #[cfg(feature = "alloc")]
 use std::{format, string::String, vec::Vec};

@@ -13,6 +13,7 @@
 // CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 //! Serialization and deserialization.
+use std::prelude::v1::*;
 
 /// A serialized positive integer.
 #[derive(Copy, Clone)]

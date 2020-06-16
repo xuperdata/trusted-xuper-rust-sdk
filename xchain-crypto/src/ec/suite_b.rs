@@ -14,6 +14,7 @@
 
 //! Elliptic curve operations on P-256 & P-384.
 
+use std::prelude::v1::*;
 use self::ops::*;
 use crate::{
     arithmetic::montgomery::*,

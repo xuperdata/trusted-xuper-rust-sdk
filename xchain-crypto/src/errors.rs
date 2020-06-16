@@ -1,4 +1,5 @@
-extern crate base58;
+use std::prelude::v1::*;
+extern crate rust_base58;
 use serde_derive;
 use std::fmt;
 

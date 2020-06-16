@@ -1,3 +1,4 @@
+use std::prelude::v1::*;
 use super::languages::*;
 use crate::errors::{Error, ErrorKind, Result};
 use rand::prelude::*;

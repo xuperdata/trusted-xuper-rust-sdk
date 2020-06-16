@@ -1,3 +1,4 @@
+use std::prelude::v1::*;
 use crate::sign::ecdsa::EcdsaKeyPair;
 use crate::sign::ecdsa::KeyPair;
 use num_bigint::BigInt;
@@ -8,6 +9,7 @@ use serde::{de, de::Deserializer, ser::Serializer, Deserialize, Serialize};
 
 use super::PublicKey;
 use crate::errors::*;
+use crate::errors::Result;
 
 ///unsafe. 这里全是是为了按照超级链目前方式进行秘钥格式化
 fn big_serialize<S>(x: &BigInt, s: S) -> std::result::Result<S::Ok, S::Error>

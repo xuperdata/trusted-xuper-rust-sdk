@@ -15,8 +15,10 @@
 //! Functionality shared by operations on public keys (ECDSA verification and
 //! ECDH agreement).
 
+use std::prelude::v1::*;
 use super::{ops::*, verify_affine_point_is_on_the_curve};
 use crate::{arithmetic::montgomery::*, errors::*};
+use crate::errors::Result;
 use untrusted;
 
 /// Parses a public key encoded in uncompressed form. The key is validated

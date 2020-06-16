@@ -1,3 +1,4 @@
+use std::prelude::v1::*;
 use crate::{ec, errors::Result};
 
 pub use crate::ec::suite_b::ecdsa::{

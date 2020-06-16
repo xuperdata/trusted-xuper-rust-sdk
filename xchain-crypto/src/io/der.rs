@@ -16,6 +16,7 @@
 //!
 //! This module contains the foundational parts of an ASN.1 DER parser.
 
+use std::prelude::v1::*;
 use super::Positive;
 use crate::errors::{Error, ErrorKind, Result};
 use untrusted;
