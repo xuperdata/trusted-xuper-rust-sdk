@@ -4,17 +4,12 @@ version = "0.1.0"
 authors = ["chenzhiyu <chen-zhiyu+chen.zhiyu@users.noreply.github.com>"]
 edition = "2018"
 
-#[lib]
-#crate-type = ["staticlib"]
-#name = "teaclave_binder"
-#path = "src/ocall.rs"
-
 [features]
 default = ["with-serde"]
 with-serde = []
 
 [dependencies]
-xchain_crypto    = { path = "../xchain-crypto"}
+xchain_crypto    = { git = "https://github.com/xuperdata/xchain-rust-crypto", package = "xchain-rust-crypto" }
 
 serde            = { version = "1.0.104", features = ["derive"]}
 serde_repr       = "0.1"

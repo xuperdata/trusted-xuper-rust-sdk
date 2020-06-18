@@ -5,7 +5,7 @@ use xchain_crypto::sign::ecdsa::KeyPair;
 /// 保管私钥，提供签名和验签
 /// 要在TEE里面运行
 /// 唯一可以调用xchain_crypto的地方
-use xchain_node_sdk::errors::*;
+use crate::errors::*;
 
 /// 加载钱包地址或者加载enclave
 #[derive(Default, Debug)]

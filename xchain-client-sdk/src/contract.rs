@@ -1,6 +1,7 @@
 use super::config;
 use crate::{session, wallet};
-use xchain_node_sdk::{errors::Result, ocall, protos};
+use xchain_node_sdk::{ocall, protos};
+use crate::errors::Result;
 /// account在chain上面给to转账amount，小费是fee，留言是des, ocallc
 pub fn invoke_contract(
     account: &wallet::Account,

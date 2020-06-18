@@ -1,5 +1,6 @@
 use crate::{config, consts, session, wallet};
-use xchain_node_sdk::{errors::*, protos};
+use xchain_node_sdk::protos;
+use crate::errors::{Error, ErrorKind, Result}
 
 /// account在chain上面给to转账amount，小费是fee，留言是desc
 pub fn transfer(

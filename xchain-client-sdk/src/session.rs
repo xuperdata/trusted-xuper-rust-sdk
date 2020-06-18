@@ -10,10 +10,11 @@ use super::config;
 
 use xchain_node_sdk::{
     encoder,
-    errors::*,
     ocall,
     protos::{xchain, xendorser},
 };
+
+use crate::errors::{Error, ErrorKind, Result};
 
 #[derive(Default)]
 pub struct Message {

@@ -110,6 +110,14 @@ impl From<serde_json::Error> for Error {
     }
 }
 
+impl From<xchain_crypto::errors::Error> for Error {
+    #[inline]
+    fn from(err: xchain_crypto::errors::Error) -> Error {
+        Error::new(ErrorKind::CryptoError, err)
+    }
+}
+
+
 impl From<std::io::Error> for Error {
     #[inline]
     fn from(err: std::io::Error) -> Error {
