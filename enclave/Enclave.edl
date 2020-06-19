@@ -1,0 +1,54 @@
+enclave {
+    from "sgx_tstd.edl" import *;
+    from "sgx_stdio.edl" import *;
+    from "sgx_backtrace.edl" import *;
+    from "sgx_tstdc.edl" import *;
+    from "sgx_asyncio.edl" import *;
+    from "sgx_sys.edl" import *;
+    from "sgx_pipe.edl" import *;
+    from "sgx_thread.edl" import *;
+    from "sgx_net.edl" import *;
+    from "sgx_env.edl" import *;
+
+    trusted {
+        public void ecall_run_tests();
+    };
+
+    untrusted {
+        int init(
+            [in] const uint8_t* bcname,
+            size_t bcname_size,
+            [in] const uint8_t* host,
+            size_t host_size,
+            uint16_t port
+        );
+
+        void close();
+
+        int ocall_xchain_endorser_call(
+            [in] const uint8_t* en_req,
+            size_t en_req_size,
+            [out] uint8_t** output,
+            [out] size_t* output_size
+        );
+
+        int ocall_xchain_post_tx(
+            [in] const uint8_t* req,
+            size_t req_size
+        );
+
+        int ocall_xchain_query_tx(
+            [in] const uint8_t* txid,
+            size_t txid_size,
+            [out] uint8_t** output,
+            [out] size_t* output_size
+        );
+
+        int ocall_xchain_pre_exec(
+            [in] const uint8_t* req,
+            size_t req_size,
+            [out] uint8_t** output,
+            [out] size_t* output_size
+        );
+    };
+};
