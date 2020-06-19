@@ -107,7 +107,7 @@ pub extern "C" fn ocall_xchain_pre_exec(
     let cli = unsafe { &(*ptr) };
     let res = cli.pre_exec(req).unwrap();
     let mut s = serde_json::to_string(&res).unwrap();
-    unsafe { 
+    unsafe {
         *output = s.as_mut_vec().as_mut_ptr();
         *output_size = s.len();
     }

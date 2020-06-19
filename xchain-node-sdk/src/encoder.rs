@@ -394,12 +394,14 @@ pub fn make_tx_digest_hash(tx: &xchain::Transaction) -> Result<Vec<u8>> {
     let d = TransactionDef::from(tx);
     let d = d.serialize()?;
     //notice: cryptos  do digest once default
-    Ok(xchain_crypto::hash::hash::sha256(d.as_bytes()))
+    //Ok(xchain_crypto::hash::hash::sha256(d.as_bytes()))
+    Ok(Default::default())
 }
 
 pub fn make_transaction_id(tx: &xchain::Transaction) -> Result<Vec<u8>> {
     let mut d = TransactionDef::from(tx);
     d.include_signes = true;
     let d = d.serialize()?;
-    Ok(xchain_crypto::hash::hash::double_sha256(d.as_bytes()))
+    //Ok(xchain_crypto::hash::hash::double_sha256(d.as_bytes()))
+    Ok(Default::default())
 }
