@@ -88,23 +88,12 @@ pub extern "C" fn ecall_run_tests() -> sgx_status_t {
              host.len(),
              port)
     };
-    match res {
-        sgx_status_t::SGX_SUCCESS => {
-            match rt {
-                sgx_status_t::SGX_SUCCESS => {
-                    println!("init xchainClient success");
-                },
-                _ => {
-                    println!("init xchainClient failed");
-                    return sgx_status_t::SGX_ERROR_UNEXPECTED
-                }
-            }
-        },
-        _ => {
-            println!("init xchainClient failed");
-            return sgx_status_t::SGX_ERROR_UNEXPECTED
-        }
+
+    if res != sgx_status_t::SGX_SUCCESS || rt != sgx_status_t::SGX_SUCCESS {
+        println!("init xchainClient failed: {}, {}", res.as_str(), rt.as_str());
+        return sgx_status_t::SGX_ERROR_UNEXPECTED
     }
+    println!("init xchainClient success");
 
     wallet::test_load_account();
     transfer::test_transfer();

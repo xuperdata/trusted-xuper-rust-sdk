@@ -42,14 +42,9 @@ fn main() {
     };
 
     let result = unsafe { ecall_run_tests(enclave.geteid()) };
-    match result {
-        sgx_status_t::SGX_SUCCESS => {
-            println!("[+] ecall enclave success!");
-        },
-        _ => {
-            println!("[-] ecall enclave failed {}!", result.as_str());
-            return;
-        }
+    if result != sgx_status_t::SGX_SUCCESS {
+        println!("[-] ecall enclave failed {}!", result.as_str());
+        return;
     }
 
     enclave.destroy();

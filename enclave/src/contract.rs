@@ -123,11 +123,7 @@ pub fn query_contract(
     invoke_rpc_request.set_auth_require(protobuf::RepeatedField::from_vec(auth_requires.clone()));
 
     let mut rt : sgx_status_t = sgx_status_t::SGX_ERROR_UNEXPECTED;
-    let req = serde_json::to_string(&invoke_rpc_request);
-    if !req.is_ok() {
-        return Err(Error::from(ErrorKind::InvalidArguments));
-    }
-    let req = req.unwrap();
+    let req = serde_json::to_string(&invoke_rpc_request)?;
 
     let mut output = 0 as *mut sgx_libc::c_void;
     let mut out_len: usize = 0;
@@ -138,26 +134,15 @@ pub fn query_contract(
                                      &mut output,
                                      &mut out_len)
     };
-    match resp {
-        sgx_status_t::SGX_SUCCESS => {
-            match rt {
-                sgx_status_t::SGX_SUCCESS => {
-                    let resp_slice = unsafe { slice::from_raw_parts(output as *mut u8, out_len) };
-                    let invoke_rpc_resp: xchain::InvokeRPCResponse = serde_json::from_slice(&resp_slice).unwrap();
-                    unsafe { crate::ocall_free(output); }
-                    Ok(invoke_rpc_resp)
-                },
-                _ => {
-                    println!("[-] query_contract ocall_xchain_pre_exec failed {}!", rt.as_str());
-                    return Err(Error::from(ErrorKind::InvalidArguments));
-                }
-            }
-        },
-        _ => {
-            println!("[-] query_contract ocall_xchain_pre_exec failed {}!", resp.as_str());
-            return Err(Error::from(ErrorKind::InvalidArguments));
-        }
+
+    if resp != sgx_status_t::SGX_SUCCESS || rt != sgx_status_t::SGX_SUCCESS {
+        println!("[-] query_contract ocall_xchain_pre_exec failed: {}, {}!", resp.as_str(), rt.as_str());
+        return Err(Error::from(ErrorKind::InvalidArguments));
     }
+    let resp_slice = unsafe { slice::from_raw_parts(output as *mut u8, out_len) };
+    let invoke_rpc_resp: xchain::InvokeRPCResponse = serde_json::from_slice(&resp_slice).unwrap();
+    unsafe { crate::ocall_free(output); }
+    Ok(invoke_rpc_resp)
 }
 
 pub fn test_contract() {

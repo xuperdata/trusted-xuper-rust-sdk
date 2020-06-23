@@ -61,11 +61,7 @@ impl<'a, 'b, 'c> Session<'a, 'b, 'c> {
         endorser_request.set_RequestData(request_data.into_bytes());
 
         let mut rt : sgx_status_t = sgx_status_t::SGX_ERROR_UNEXPECTED;
-        let req = serde_json::to_string(&endorser_request);
-        if !req.is_ok() {
-            return Err(Error::from(ErrorKind::InvalidArguments));
-        }
-        let req = req.unwrap();
+        let req = serde_json::to_string(&endorser_request)?;
 
         let mut output = 0 as *mut sgx_libc::c_void;
         let mut out_len: usize = 0;
@@ -76,35 +72,22 @@ impl<'a, 'b, 'c> Session<'a, 'b, 'c> {
                                        &mut output,
                                        &mut out_len)
         };
-        // TODO resp和rt都要判断
-        match resp {
-            sgx_status_t::SGX_SUCCESS => {
-                match rt {
-                    sgx_status_t::SGX_SUCCESS => {
-                        let resp_slice = unsafe { slice::from_raw_parts(output as *mut u8, out_len) };
-                        let endorser_resp: xendorser::EndorserResponse = serde_json::from_slice(&resp_slice).unwrap();
-                        let pre_exec_with_select_utxo_resp: xchain::PreExecWithSelectUTXOResponse =
-                            serde_json::from_slice(&endorser_resp.ResponseData)?;
-                        self.check_resp_code(
-                            pre_exec_with_select_utxo_resp
-                                .get_response()
-                                .get_responses(),
-                        )?;
-                        unsafe { crate::ocall_free(output); }
-                        Ok(pre_exec_with_select_utxo_resp)
-                    },
-                    _ => {
-                        println!("[-] pre_exec_with_select_utxo ocall_xchain_endorser_call failed {}!", rt.as_str());
-                        return Err(Error::from(ErrorKind::InvalidArguments));
-                    }
-                }
 
-            },
-            _ => {
-                println!("[-] pre_exec_with_select_utxo ocall_xchain_endorser_call failed {}!", resp.as_str());
-                return Err(Error::from(ErrorKind::InvalidArguments));
-            }
+        if resp != sgx_status_t::SGX_SUCCESS || rt != sgx_status_t::SGX_SUCCESS {
+            println!("[-] pre_exec_with_select_utxo ocall_xchain_endorser_call failed: {}, {}!", resp.as_str(), rt.as_str());
+            return Err(Error::from(ErrorKind::InvalidArguments));
         }
+        let resp_slice = unsafe { slice::from_raw_parts(output as *mut u8, out_len) };
+        let endorser_resp: xendorser::EndorserResponse = serde_json::from_slice(&resp_slice)?;
+        let pre_exec_with_select_utxo_resp: xchain::PreExecWithSelectUTXOResponse =
+            serde_json::from_slice(&endorser_resp.ResponseData)?;
+        self.check_resp_code(
+            pre_exec_with_select_utxo_resp
+                .get_response()
+                .get_responses(),
+        )?;
+        unsafe { crate::ocall_free(output); }
+        Ok(pre_exec_with_select_utxo_resp)
     }
 
     fn generate_tx_input(
@@ -305,13 +288,9 @@ impl<'a, 'b, 'c> Session<'a, 'b, 'c> {
         endorser_request.set_RequestData(request_data.into_bytes());
 
         let mut rt : sgx_status_t = sgx_status_t::SGX_ERROR_UNEXPECTED;
-        let req = serde_json::to_string(&endorser_request);
-        if !req.is_ok() {
-            return Err(Error::from(ErrorKind::InvalidArguments));
-        }
-        let req = req.unwrap();
+        let req = serde_json::to_string(&endorser_request)?;
 
-        let mut output = 0 as *mut sgx_libc::c_void;  
+        let mut output = 0 as *mut sgx_libc::c_void;
         let mut out_len: usize = 0;
         let resp = unsafe {
             crate::ocall_xchain_endorser_call(&mut rt,
@@ -320,26 +299,15 @@ impl<'a, 'b, 'c> Session<'a, 'b, 'c> {
                                        &mut output,
                                        &mut out_len)
         };
-        match resp {
-            sgx_status_t::SGX_SUCCESS => {
-                match rt {
-                    sgx_status_t::SGX_SUCCESS => {
-                        let resp_slice = unsafe { slice::from_raw_parts(output as *mut u8, out_len) };
-                        let result: xendorser::EndorserResponse = serde_json::from_slice(resp_slice).unwrap();
-                        unsafe { crate::ocall_free(output); }
-                        Ok(result.EndorserSign.unwrap())
-                    },
-                    _ => {
-                        println!("[-] compliance_check ocall_xchain_endorser_call failed {}!", rt.as_str());
-                        return Err(Error::from(ErrorKind::InvalidArguments));
-                    }
-                }
-            },
-            _ => {
-                println!("[-] compliance_check ocall_xchain_endorser_call failed {}!", resp.as_str());
-                return Err(Error::from(ErrorKind::InvalidArguments));
-            }
+
+        if resp != sgx_status_t::SGX_SUCCESS || rt != sgx_status_t::SGX_SUCCESS {
+            println!("[-] compliance_check ocall_xchain_endorser_call failed: {}, {}!", resp.as_str(), rt.as_str());
+            return Err(Error::from(ErrorKind::InvalidArguments));
         }
+        let resp_slice = unsafe { slice::from_raw_parts(output as *mut u8, out_len) };
+        let result: xendorser::EndorserResponse = serde_json::from_slice(resp_slice).unwrap();
+        unsafe { crate::ocall_free(output); }
+        Ok(result.EndorserSign.unwrap())
     }
 
     pub fn gen_complete_tx_and_post(
@@ -354,34 +322,19 @@ impl<'a, 'b, 'c> Session<'a, 'b, 'c> {
         tx.set_txid(encoder::make_transaction_id(&tx)?);
 
         let mut rt : sgx_status_t = sgx_status_t::SGX_ERROR_UNEXPECTED;
-        let tran = serde_json::to_string(&tx);
-        if !tran.is_ok() {
+        let tran = serde_json::to_string(&tx)?;
+
+        let resp = unsafe {
+            crate::ocall_xchain_post_tx( &mut rt,
+                                         tran.as_ptr() as *const u8,
+                                         tran.len())
+        };
+
+        if resp != sgx_status_t::SGX_SUCCESS || rt != sgx_status_t::SGX_SUCCESS {
+            println!("[-] ocall_xchain_post_tx failed: {}, {}!", resp.as_str(), rt.as_str());
             return Err(Error::from(ErrorKind::InvalidArguments));
         }
-        let tran = tran.unwrap();
-
-        let res = unsafe {
-            crate::ocall_xchain_post_tx(  &mut rt,
-                                   tran.as_ptr() as *const u8,
-                                   tran.len())
-        };
-        match res {
-            sgx_status_t::SGX_SUCCESS => {
-                match rt {
-                    sgx_status_t::SGX_SUCCESS => {
-                        Ok(hex::encode(tx.txid))
-                    },
-                    _ => {
-                        println!("[-] ocall_xchain_post_tx failed {}!", rt.as_str());
-                        return Err(Error::from(ErrorKind::InvalidArguments));
-                    }
-                }
-            },
-            _ => {
-                println!("[-] ocall_xchain_post_tx failed {}!", res.as_str());
-                return Err(Error::from(ErrorKind::InvalidArguments));
-            }
-        }
+        Ok(hex::encode(tx.txid))
     }
 
     #[allow(dead_code)]
