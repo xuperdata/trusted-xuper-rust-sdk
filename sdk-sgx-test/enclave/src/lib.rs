@@ -120,7 +120,7 @@ pub fn test_contract() {
     );
 
     let mn = String::from("increase");
-    let mut args = HashMap::new();
+    let mut args = std::collections::HashMap::new();
     args.insert(String::from("key"), String::from("counter").into_bytes());
 
     let txid = xchain_client_sdk::contract::invoke_contract(&acc, &bcname, &mn, args);
@@ -159,16 +159,16 @@ pub fn test_query() {
     let bcname = String::from("xuper");
     let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     d.push("key/private.key");
-    let acc = super::wallet::Account::new(
+    let acc = xchain_client_sdk::wallet::Account::new(
         d.to_str().unwrap(),
         "counter327861",
         "XC1111111111000000@xuper",
     );
     let mn = String::from("get");
-    let mut args = HashMap::new();
+    let mut args = std::collections::HashMap::new();
     args.insert(String::from("key"), String::from("counter").into_bytes());
 
-    let resp = query_contract(&acc, &bcname, &mn, args);
+    let resp = xchain_client_sdk::contract::query_contract(&acc, &bcname, &mn, args);
     assert_eq!(resp.is_ok(), true);
     println!("contract query response: {:?}", resp);
     println!("contract query test passed");

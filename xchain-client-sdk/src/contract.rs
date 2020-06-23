@@ -7,7 +7,7 @@ extern crate sgx_types;
 use crate::protos::xchain;
 use sgx_types::*;
 use std::collections::HashMap;
-use std::path::PathBuf;
+//use std::path::PathBuf;
 use std::slice;
 
 /// account在chain上面给to转账amount，小费是fee，留言是des, ocallc
@@ -15,7 +15,7 @@ pub fn invoke_contract(
     account: &wallet::Account,
     chain_name: &String,
     method_name: &String,
-    args: std::collections::HashMap<String, Vec<u8>>,
+    args: HashMap<String, Vec<u8>>,
 ) -> Result<String> {
     let mut invoke_req = protos::xchain::InvokeRequest::new();
     invoke_req.set_module_name(String::from("wasm"));
@@ -90,7 +90,7 @@ pub fn query_contract(
     account: &wallet::Account,
     chain_name: &String,
     method_name: &String,
-    args: std::collections::HashMap<String, Vec<u8>>,
+    args: HashMap<String, Vec<u8>>,
 ) -> Result<xchain::InvokeRPCResponse> {
     let mut invoke_req = protos::xchain::InvokeRequest::new();
     invoke_req.set_module_name(String::from("wasm"));

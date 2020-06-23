@@ -3,10 +3,10 @@ use crate::protos;
 use crate::{config, consts, session, wallet};
 use std::prelude::v1::*;
 extern crate sgx_types;
-use crate::protos::xchain;
-use sgx_types::*;
-use std::path::PathBuf;
-use std::slice;
+//use crate::protos::xchain;
+//use sgx_types::*;
+//use std::path::PathBuf;
+//use std::slice;
 
 /// account在chain上面给to转账amount，小费是fee，留言是desc
 pub fn transfer(

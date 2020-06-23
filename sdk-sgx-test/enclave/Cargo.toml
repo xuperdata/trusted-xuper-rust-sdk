@@ -3,6 +3,10 @@ name = "run-tests-enclave"
 version = "1.0.0"
 edition = "2018"
 
+[lib]	
+name = "run_tests_enclave"	
+crate-type = ["staticlib"]
+
 [features]
 default = ["mesalock_sgx", "with-serde"]
 with-serde = []
