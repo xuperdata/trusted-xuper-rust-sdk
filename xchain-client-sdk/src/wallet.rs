@@ -3,8 +3,6 @@ use rand::rngs::StdRng;
 use rand_core::{RngCore, SeedableRng};
 use xchain_crypto::sign::ecdsa::KeyPair;
 
-use std::path::PathBuf;
-
 /// 保管私钥，提供签名和验签
 /// 要在TEE里面运行
 /// 唯一可以调用xchain_crypto的地方
@@ -73,6 +71,7 @@ pub fn get_nonce() -> Result<String> {
     Ok(format!("{}{:08}", t, r))
 }
 
+/*
 pub fn test_load_account() {
     let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     d.push("key/private.key");
@@ -83,7 +82,6 @@ pub fn test_load_account() {
     println!("load account test passed");
 }
 
-/*
 #[cfg(test)]
 mod tests {
     use std::path::PathBuf;

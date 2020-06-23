@@ -160,6 +160,7 @@ pub fn query_contract(
     Ok(invoke_rpc_resp)
 }
 
+/*
 pub fn test_contract() {
     let bcname = String::from("xuper");
     let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
@@ -224,3 +225,4 @@ pub fn test_query() {
     println!("contract query response: {:?}", resp);
     println!("contract query test passed");
 }
+*/

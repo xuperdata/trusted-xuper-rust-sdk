@@ -74,6 +74,7 @@ pub fn transfer(
     sess.gen_complete_tx_and_post(&mut pre_exe_with_sel_res)
 }
 
+/*
 pub fn test_transfer() {
     let bcname = String::from("xuper");
     let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
@@ -119,3 +120,4 @@ pub fn test_transfer() {
     println!("{:?}", result);
     println!("transfer test passed");
 }
+*/

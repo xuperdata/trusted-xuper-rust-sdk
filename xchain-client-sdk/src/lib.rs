@@ -72,6 +72,7 @@ extern "C" {
     ) -> sgx_status_t;
 }
 
+/*
 #[no_mangle]
 pub extern "C" fn ecall_run_tests() -> sgx_status_t {
     let mut rt : sgx_status_t = sgx_status_t::SGX_ERROR_UNEXPECTED;
@@ -107,3 +108,4 @@ pub extern "C" fn ecall_run_tests() -> sgx_status_t {
     println!("passed all tests");
     sgx_status_t::SGX_SUCCESS
 }
+*/

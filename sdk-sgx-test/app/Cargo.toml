@@ -7,4 +7,4 @@ edition = "2018"
 [dependencies]
 sgx_types = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk.git", tag = "v1.1.2" }
 sgx_urts = { git = "https://github.com/apache/incubator-teaclave-sgx-sdk.git", tag = "v1.1.2" }
-xchain_node_sdk  = { path = "../xchain-node-sdk"}
+xchain_node_sdk  = { path = "../../xchain-node-sdk"}
