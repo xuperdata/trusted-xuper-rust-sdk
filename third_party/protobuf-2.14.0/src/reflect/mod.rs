@@ -1,5 +1,4 @@
 //! Reflection implementation for protobuf types.
-use std::prelude::v1::*;
 
 use core1::Message;
 

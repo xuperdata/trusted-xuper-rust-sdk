@@ -9,12 +9,12 @@ use std::ops::*;
 
 lazy_static! {
     static ref RIGHT_SHIFT_11BITS_DIVIDER: num_bigint::BigInt =
-        { num_bigint::BigInt::from_i32(2048).unwrap() };
+        num_bigint::BigInt::from_i32(2048).unwrap();
     static ref LAST_11BITS_MASK: num_bigint::BigInt =
-        { num_bigint::BigInt::from_i32(2047).unwrap() };
-    pub static ref BIGINT_ZERO: num_bigint::BigInt = { num_traits::Zero::zero() };
-    pub static ref BIGINT_ONE: num_bigint::BigInt = { num_traits::One::one() };
-    pub static ref BIGINT_TWO: num_bigint::BigInt = { num_bigint::BigInt::from_i32(2).unwrap() };
+        num_bigint::BigInt::from_i32(2047).unwrap();
+    pub static ref BIGINT_ZERO: num_bigint::BigInt = num_traits::Zero::zero();
+    pub static ref BIGINT_ONE: num_bigint::BigInt = num_traits::One::one();
+    pub static ref BIGINT_TWO: num_bigint::BigInt = num_bigint::BigInt::from_i32(2).unwrap();
 }
 
 //  检查试图获取的Entropy的比特大小是否符合规范要求：

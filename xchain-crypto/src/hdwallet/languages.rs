@@ -8,8 +8,8 @@ pub enum Language {
 }
 
 lazy_static! {
-    static ref WORDLIST_S_CH: WordMap = { load_wordlist(include_str!("langs/simplified_chinese.txt")) };
-    static ref WORDLIST_EN: WordMap = { load_wordlist(include_str!("langs/english.txt")) };
+    static ref WORDLIST_S_CH: WordMap = load_wordlist(include_str!("langs/simplified_chinese.txt"));
+    static ref WORDLIST_EN: WordMap = load_wordlist(include_str!("langs/english.txt"));
 }
 
 struct WordMap {
