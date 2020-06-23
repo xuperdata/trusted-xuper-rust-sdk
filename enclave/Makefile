@@ -12,5 +12,5 @@ ifeq ($(XARGO_SGX), 1)
 	cp ./target/x86_64-unknown-linux-sgx/release/$(Rust_Enclave_Name) ../lib/$(Rust_Enclave_Name)
 else
 	cargo build
-	cp ./target/debug/$(Rust_Enclave_Name) ../lib/$(Rust_Enclave_Name)
+	cp ../target/debug/$(Rust_Enclave_Name) ../lib/$(Rust_Enclave_Name)
 endif

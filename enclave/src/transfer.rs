@@ -2,6 +2,11 @@ use std::prelude::v1::*;
 use crate::{config, consts, session, wallet};
 use crate::protos;
 use crate::errors::{Error, ErrorKind, Result};
+extern crate sgx_types;
+use sgx_types::*;
+use std::slice;
+use std::path::PathBuf;
+use crate::protos::xchain;
 
 /// account在chain上面给to转账amount，小费是fee，留言是desc
 pub fn transfer(
@@ -69,42 +74,41 @@ pub fn transfer(
     sess.gen_complete_tx_and_post(&mut pre_exe_with_sel_res)
 }
 
-#[cfg(test)]
-mod tests {
-    use super::config;
-    use std::path::PathBuf;
-    use xchain_node_sdk::ocall;
+pub fn test_transfer() {
+    let bcname = String::from("xuper");
+    let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    d.push("key/private.key");
+    let acc = super::wallet::Account::new(
+        d.to_str().unwrap(),
+        Default::default(),
+        "XC1111111111000000@xuper",
+    );
+    let to = "dpzuVdosQrF2kmzumhVeFQZa1aYcdgFpN".to_string();
+    let amount = "1401".to_string();
+    let fee = "0".to_string();
+    let desc = "test duanbing".to_string();
 
-    #[test]
-    fn test_transfer() {
-        let host = config::CONFIG.read().unwrap().node.clone();
-        let port = config::CONFIG.read().unwrap().endorse_port;
-        let bcname = String::from("xuper");
-        let res = ocall::init(&bcname, &host, port);
-        assert_eq!(res.is_ok(), true);
+    let res = transfer(&acc, &bcname, &to, &amount, &fee, &desc);
+    println!("transfer res: {:?}", res);
+    assert_eq!(res.is_ok(), true);
+    let txid = res.unwrap();
+    println!("txid: {:?}", txid);
 
-        let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-        d.push("key/private.key");
-        let acc = super::wallet::Account::new(
-            d.to_str().unwrap(),
-            Default::default(),
-            "XC1111111111000000@xuper",
-        );
-        let to = "dpzuVdosQrF2kmzumhVeFQZa1aYcdgFpN".to_string();
-        let amount = "1401".to_string();
-        let fee = "0".to_string();
-        let desc = "test duanbing".to_string();
-
-        let res = super::transfer(&acc, &bcname, &to, &amount, &fee, &desc);
-        println!("transfer res: {:?}", res);
-        assert_eq!(res.is_ok(), true);
-        let txid = res.unwrap();
-        println!("txid: {:?}", txid);
-
-        let res = ocall::ocall_xchain_query_tx(&txid);
-        assert_eq!(res.is_ok(), true);
-        println!("{:?}", res.unwrap());
-
-        ocall::close();
-    }
+    let mut rt : sgx_status_t = sgx_status_t::SGX_ERROR_UNEXPECTED;
+    let mut output = 0 as *mut sgx_libc::c_void;
+    let mut out_len: usize = 0;
+    let res = unsafe {
+        crate::ocall_xchain_query_tx(&mut rt,
+                                    txid.as_ptr() as * const u8,
+                                    txid.len(),
+                                    &mut output,
+                                    &mut out_len)
+    };
+    assert_eq!(res, sgx_status_t::SGX_SUCCESS);
+    assert_eq!(rt, sgx_status_t::SGX_SUCCESS);
+    let resp_slice = unsafe { slice::from_raw_parts(output as *mut u8, out_len) };
+    let result:xchain::TxStatus = serde_json::from_slice(resp_slice).unwrap();
+    unsafe{ crate::ocall_free(output); }
+    println!("{:?}", result);
+    println!("transfer test passed");
 }

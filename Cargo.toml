@@ -1,6 +1,5 @@
 [workspace]
 members = [
-	"xchain-crypto",
-	"xchain-client-sdk",
-	"xchain-node-sdk",
+    "app",
+    "enclave",
 ]

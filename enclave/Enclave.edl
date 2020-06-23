@@ -16,38 +16,39 @@ enclave {
 
     untrusted {
         int init(
-            [in] const uint8_t* bcname,
+            [in, count=bcname_size] const uint8_t* bcname,
             size_t bcname_size,
-            [in] const uint8_t* host,
+            [in, count=host_size] const uint8_t* host,
             size_t host_size,
             uint16_t port
         );
 
         void close();
+        void ocall_free([user_check]void* p);
 
         int ocall_xchain_endorser_call(
-            [in] const uint8_t* en_req,
+            [in, count=en_req_size] const uint8_t* en_req,
             size_t en_req_size,
-            [out] uint8_t** output,
+            [out] void** output,
             [out] size_t* output_size
         );
 
         int ocall_xchain_post_tx(
-            [in] const uint8_t* req,
+            [in, count=req_size] const uint8_t* req,
             size_t req_size
         );
 
         int ocall_xchain_query_tx(
-            [in] const uint8_t* txid,
+            [in, count=txid_size] const uint8_t* txid,
             size_t txid_size,
-            [out] uint8_t** output,
+            [out] void** output,
             [out] size_t* output_size
         );
 
         int ocall_xchain_pre_exec(
-            [in] const uint8_t* req,
+            [in, count=req_size] const uint8_t* req,
             size_t req_size,
-            [out] uint8_t** output,
+            [out] void** output,
             [out] size_t* output_size
         );
     };

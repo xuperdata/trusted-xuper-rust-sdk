@@ -20,9 +20,15 @@ pub extern "C" fn init(
     port: u16,
 ) -> sgx_status_t {
     let bcname = unsafe { slice::from_raw_parts(bcname, bcname_size) };
-    let bcname = String::from_utf8(bcname.to_vec()).unwrap();
+    let bcname = String::from_utf8(bcname.to_vec());
     let host = unsafe { slice::from_raw_parts(host, host_size) };
-    let host = String::from_utf8(host.to_vec()).unwrap();
+    let host = String::from_utf8(host.to_vec());
+    if !(bcname.is_ok() && host.is_ok()) {
+        return sgx_status_t::SGX_ERROR_UNEXPECTED
+    }
+    let bcname = bcname.unwrap();
+    let host = host.unwrap();
+
     let ptr = CLI.load(Ordering::SeqCst);
     if ptr.is_null() {
         let ptr: *mut XChainClient =
@@ -36,10 +42,15 @@ pub extern "C" fn init(
 pub extern "C" fn close() {}
 
 #[no_mangle]
+pub extern "C" fn ocall_free(p: *mut libc::c_void) {
+    unsafe { libc::free(p) }
+}
+
+#[no_mangle]
 pub extern "C" fn ocall_xchain_endorser_call(
     en_req: *const u8,
     en_req_size: usize,
-    output: *mut *mut u8,
+    output: *mut *mut libc::c_void,
     output_size: *mut usize,
 ) -> sgx_status_t {
     let en_req_slice = unsafe { slice::from_raw_parts(en_req, en_req_size) };
@@ -47,11 +58,24 @@ pub extern "C" fn ocall_xchain_endorser_call(
 
     let ptr: *mut XChainClient = CLI.load(Ordering::SeqCst) as *mut XChainClient;
     let cli = unsafe { &(*ptr) };
-    let res = cli.call(en_req).unwrap();
+    let res = cli.call(en_req);
+    if !res.is_ok() {
+        return sgx_status_t::SGX_ERROR_UNEXPECTED
+    }
+    let res = res.unwrap();
 
-    let mut s = serde_json::to_string(&res).unwrap();
+    let s = serde_json::to_string(&res);
+    if !s.is_ok() {
+        return sgx_status_t::SGX_ERROR_UNEXPECTED
+    }
+    let s = s.unwrap();
+
     unsafe {
-        *output = s.as_mut_vec().as_mut_ptr();
+        *output = libc::malloc(s.len());
+        if output.is_null() {
+            return sgx_status_t::SGX_ERROR_UNEXPECTED
+        }
+        std::ptr::copy_nonoverlapping(s.as_ptr(), *(output as *mut *mut u8), s.len());
         *output_size = s.len();
     }
     sgx_status_t::SGX_SUCCESS
@@ -75,19 +99,35 @@ pub extern "C" fn ocall_xchain_post_tx(req: *const u8, req_size: usize) -> sgx_s
 pub extern "C" fn ocall_xchain_query_tx(
     txid: *const u8,
     txid_size: usize,
-    output: *mut *mut u8,
+    output: *mut *mut libc::c_void,
     output_size: *mut usize,
 ) -> sgx_status_t {
     let req_slice = unsafe { slice::from_raw_parts(txid, txid_size) };
-    let txid = String::from_utf8(req_slice.to_vec()).unwrap();
+    let txid = String::from_utf8(req_slice.to_vec());
+    if !txid.is_ok() {
+        return sgx_status_t::SGX_ERROR_UNEXPECTED
+    }
+    let txid = txid.unwrap();
 
     let ptr: *mut XChainClient = CLI.load(Ordering::SeqCst) as *mut XChainClient;
     let cli = unsafe { &(*ptr) };
-    let res = cli.query_tx(&txid).unwrap();
+    let res = cli.query_tx(&txid);
+    if !res.is_ok() {
+        return sgx_status_t::SGX_ERROR_UNEXPECTED
+    }
+    let res = res.unwrap();
 
-    let mut s = serde_json::to_string(&res).unwrap();
+    let s = serde_json::to_string(&res);
+    if !s.is_ok() {
+        return sgx_status_t::SGX_ERROR_UNEXPECTED
+    }
+    let s = s.unwrap();
     unsafe {
-        *output = s.as_mut_vec().as_mut_ptr();
+        *output = libc::malloc(s.len());
+        if output.is_null() {
+            return sgx_status_t::SGX_ERROR_UNEXPECTED
+        }
+        std::ptr::copy_nonoverlapping(s.as_ptr(), *(output as *mut *mut u8), s.len());
         *output_size = s.len();
     }
     sgx_status_t::SGX_SUCCESS
@@ -97,7 +137,7 @@ pub extern "C" fn ocall_xchain_query_tx(
 pub extern "C" fn ocall_xchain_pre_exec(
     req: *const u8,
     req_size: usize,
-    output: *mut *mut u8,
+    output: *mut *mut libc::c_void,
     output_size: *mut usize,
 ) -> sgx_status_t {
     let req_slice = unsafe { slice::from_raw_parts(req, req_size) };
@@ -105,12 +145,25 @@ pub extern "C" fn ocall_xchain_pre_exec(
 
     let ptr: *mut XChainClient = CLI.load(Ordering::SeqCst) as *mut XChainClient;
     let cli = unsafe { &(*ptr) };
-    let res = cli.pre_exec(req).unwrap();
-    let mut s = serde_json::to_string(&res).unwrap();
+    let res = cli.pre_exec(req);
+    if !res.is_ok() {
+        return sgx_status_t::SGX_ERROR_UNEXPECTED
+    }
+    let res = res.unwrap();
+
+    let s = serde_json::to_string(&res);
+    if !s.is_ok() {
+        return sgx_status_t::SGX_ERROR_UNEXPECTED
+    }
+    let s = s.unwrap();
+
     unsafe {
-        *output = s.as_mut_vec().as_mut_ptr();
+        *output = libc::malloc(s.len());
+        if output.is_null() {
+            return sgx_status_t::SGX_ERROR_UNEXPECTED
+        }
+        std::ptr::copy_nonoverlapping(s.as_ptr(), *(output as *mut *mut u8), s.len());
         *output_size = s.len();
     }
-
     sgx_status_t::SGX_SUCCESS
 }

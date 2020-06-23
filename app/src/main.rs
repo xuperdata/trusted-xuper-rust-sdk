@@ -1,5 +1,4 @@
 extern crate xchain_node_sdk;
-use xchain_node_sdk::*;
 
 use sgx_types::*;
 use sgx_urts::SgxEnclave;
@@ -43,11 +42,12 @@ fn main() {
     };
 
     let result = unsafe { ecall_run_tests(enclave.geteid()) };
-
     match result {
-        sgx_status_t::SGX_SUCCESS => {}
+        sgx_status_t::SGX_SUCCESS => {
+            println!("[+] ecall enclave success!");
+        },
         _ => {
-            println!("[-] ECALL Enclave Failed {}!", result.as_str());
+            println!("[-] ecall enclave failed {}!", result.as_str());
             return;
         }
     }

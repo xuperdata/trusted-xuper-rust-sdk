@@ -54,8 +54,8 @@ App_SRC_Files := $(shell find app/ -type f -name '*.rs') $(shell find app/ -type
 App_Include_Paths := -I ./app -I./include -I$(SGX_SDK)/include -I$(CUSTOM_EDL_PATH) -I/usr/include
 App_C_Flags := $(SGX_COMMON_CFLAGS) -fPIC -Wno-attributes $(App_Include_Paths)
 
-App_Rust_Path := ./app/target/debug
-App_Enclave_u_Object :=app/libEnclave_u.a
+App_Rust_Path := ./target/debug
+App_Enclave_u_Object := app/libEnclave_u.a
 App_Name := bin/run-tests
 
 ######## Enclave Settings ########

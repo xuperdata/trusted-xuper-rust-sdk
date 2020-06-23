@@ -1,9 +1,15 @@
 use std::prelude::v1::*;
 use super::config;
 use crate::{session, wallet};
-//use xchain_node_sdk::{ocall, protos};
 use crate::protos;
-use crate::errors::Result;
+use crate::errors::{Error, ErrorKind, Result};
+extern crate sgx_types;
+use sgx_types::*;
+use std::slice;
+use std::path::PathBuf;
+use crate::protos::xchain;
+use std::collections::HashMap;
+
 /// account在chain上面给to转账amount，小费是fee，留言是des, ocallc
 pub fn invoke_contract(
     account: &wallet::Account,
@@ -85,7 +91,7 @@ pub fn query_contract(
     chain_name: &String,
     method_name: &String,
     args: std::collections::HashMap<String, Vec<u8>>,
-) -> Result<protos::xchain::InvokeRPCResponse> {
+) -> Result<xchain::InvokeRPCResponse> {
     let mut invoke_req = protos::xchain::InvokeRequest::new();
     invoke_req.set_module_name(String::from("wasm"));
     invoke_req.set_contract_name(account.contract_name.to_owned());
@@ -116,89 +122,98 @@ pub fn query_contract(
     invoke_rpc_request.set_initiator(account.address.to_owned());
     invoke_rpc_request.set_auth_require(protobuf::RepeatedField::from_vec(auth_requires.clone()));
 
-    /*
-    let msg = session::Message {
-        to: String::from(""),
-        fee: String::from("0"),
-        desc: String::from(""),
-        auth_require: auth_requires,
-        amount: Default::default(),
-        frozen_height: 0,
-        initiator: account.address.to_owned(),
-    };
+    let mut rt : sgx_status_t = sgx_status_t::SGX_ERROR_UNEXPECTED;
+    let req = serde_json::to_string(&invoke_rpc_request);
+    if !req.is_ok() {
+        return Err(Error::from(ErrorKind::InvalidArguments));
+    }
+    let req = req.unwrap();
 
-    let sess = session::Session::new(chain_name, account, &msg);
-    */
-    //ocall::ocall_xchain_pre_exec(invoke_rpc_request)
-    unimplemented!()
+    let mut output = 0 as *mut sgx_libc::c_void;
+    let mut out_len: usize = 0;
+    let resp = unsafe {
+        crate::ocall_xchain_pre_exec(&mut rt,
+                                     req.as_ptr() as *const u8,
+                                     req.len(),
+                                     &mut output,
+                                     &mut out_len)
+    };
+    match resp {
+        sgx_status_t::SGX_SUCCESS => {
+            match rt {
+                sgx_status_t::SGX_SUCCESS => {
+                    let resp_slice = unsafe { slice::from_raw_parts(output as *mut u8, out_len) };
+                    let invoke_rpc_resp: xchain::InvokeRPCResponse = serde_json::from_slice(&resp_slice).unwrap();
+                    unsafe { crate::ocall_free(output); }
+                    Ok(invoke_rpc_resp)
+                },
+                _ => {
+                    println!("[-] query_contract ocall_xchain_pre_exec failed {}!", rt.as_str());
+                    return Err(Error::from(ErrorKind::InvalidArguments));
+                }
+            }
+        },
+        _ => {
+            println!("[-] query_contract ocall_xchain_pre_exec failed {}!", resp.as_str());
+            return Err(Error::from(ErrorKind::InvalidArguments));
+        }
+    }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::config;
-    use std::collections::HashMap;
-    use std::path::PathBuf;
-    use xchain_node_sdk::ocall;
+pub fn test_contract() {
+    let bcname = String::from("xuper");
+    let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    d.push("key/private.key");
+    let acc = super::wallet::Account::new(
+        d.to_str().unwrap(),
+        "counter327861",
+        "XC1111111111000000@xuper",
+    );
 
-    #[test]
-    fn test_contract() {
-        let host = config::CONFIG.read().unwrap().node.clone();
-        let port = config::CONFIG.read().unwrap().endorse_port;
-        let bcname = String::from("xuper");
-        let res = ocall::init(&bcname, &host, port);
-        assert_eq!(res.is_ok(), true);
+    let mn = String::from("increase");
+    let mut args = HashMap::new();
+    args.insert(String::from("key"), String::from("counter").into_bytes());
 
-        let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-        d.push("key/private.key");
-        let acc = super::wallet::Account::new(
-            d.to_str().unwrap(),
-            "counter327861",
-            "XC1111111111000000@xuper",
-        );
+    let txid = invoke_contract(&acc, &bcname, &mn, args);
+    println!("contract txid: {:?}", txid);
 
-        let mn = String::from("increase");
-        let mut args = HashMap::new();
-        args.insert(String::from("key"), String::from("counter").into_bytes());
+    assert_eq!(txid.is_ok(), true);
+    let txid = txid.unwrap();
 
-        let txid = super::invoke_contract(&acc, &bcname, &mn, args);
-        println!("contract txid: {:?}", txid);
+    let mut rt : sgx_status_t = sgx_status_t::SGX_ERROR_UNEXPECTED;
+    let mut output = 0 as *mut sgx_libc::c_void;
+    let mut out_len: usize = 0;
+    let res = unsafe {
+        crate::ocall_xchain_query_tx(&mut rt,
+                                     txid.as_ptr() as * const u8,
+                                     txid.len(),
+                                     &mut output,
+                                     &mut out_len)
+    };
+    assert_eq!(res, sgx_status_t::SGX_SUCCESS);
+    assert_eq!(rt, sgx_status_t::SGX_SUCCESS);
+    let resp_slice = unsafe { slice::from_raw_parts(output as *mut u8, out_len) };
+    let result:xchain::TxStatus = serde_json::from_slice(resp_slice).unwrap();
+    unsafe{ crate::ocall_free(output); }
+    println!("{:?}", result);
+    println!("invoke contract test passed");
+}
 
-        assert_eq!(txid.is_ok(), true);
-        let txid = txid.unwrap();
+pub fn test_query() {
+    let bcname = String::from("xuper");
+    let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    d.push("key/private.key");
+    let acc = super::wallet::Account::new(
+        d.to_str().unwrap(),
+        "counter327861",
+        "XC1111111111000000@xuper",
+    );
+    let mn = String::from("get");
+    let mut args = HashMap::new();
+    args.insert(String::from("key"), String::from("counter").into_bytes());
 
-        let res = ocall::ocall_xchain_query_tx(&txid);
-        assert_eq!(res.is_ok(), true);
-        println!("{:?}", res.unwrap());
-
-        ocall::close();
-    }
-
-    #[test]
-    fn test_query() {
-        let host = config::CONFIG.read().unwrap().node.clone();
-        let port = config::CONFIG.read().unwrap().endorse_port;
-        let bcname = String::from("xuper");
-        let res = ocall::init(&bcname, &host, port);
-        assert_eq!(res.is_ok(), true);
-
-        let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-        d.push("key/private.key");
-        let acc = super::wallet::Account::new(
-            d.to_str().unwrap(),
-            "counter327861",
-            "XC1111111111000000@xuper",
-        );
-        let mn = String::from("get");
-        let mut args = HashMap::new();
-        args.insert(String::from("key"), String::from("counter").into_bytes());
-
-        let resp = super::query_contract(&acc, &bcname, &mn, args);
-        assert_eq!(resp.is_ok(), true);
-        println!(
-            "contract query result: {}",
-            std::str::from_utf8(&resp.ok().unwrap().get_response().get_response()[0]).unwrap()
-        );
-
-        ocall::close();
-    }
+    let resp = query_contract(&acc, &bcname, &mn, args);
+    assert_eq!(resp.is_ok(), true);
+    println!("contract query response: {:?}", resp);
+    println!("contract query test passed");
 }

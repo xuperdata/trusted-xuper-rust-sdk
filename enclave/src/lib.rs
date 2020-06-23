@@ -6,14 +6,8 @@
 #[macro_use]
 extern crate sgx_tstd as std;
 
-/* #![cfg_attr(not(target_env = "sgx"), no_std)]
-#![cfg_attr(target_env = "sgx", feature(rustc_private))]
-#[cfg(not(target_env = "sgx"))] */
-
 use std::prelude::v1::*;
-
 extern crate serde_yaml;
-//extern crate xchain_node_sdk;
 
 #[macro_use]
 extern crate lazy_static;
@@ -21,9 +15,7 @@ extern crate rand;
 extern crate serde_json;
 
 extern crate sgx_types;
-use std::time::*;
 use sgx_types::*;
-use std::ptr;
 
 #[macro_use]
 extern crate serde_derive;
@@ -48,17 +40,81 @@ extern "C" {
         host_size: usize,
         port: u16,
     ) -> sgx_status_t;
+
+    pub fn close();
+
+    pub fn ocall_free(p: *mut sgx_libc::c_void);
+
+    pub fn ocall_xchain_endorser_call ( ret_val : *mut sgx_status_t,
+        en_req: *const u8,
+        en_req_size: usize,
+        output: *mut *mut sgx_libc::c_void,
+        output_size: *mut usize,
+    ) -> sgx_status_t;
+
+    pub fn ocall_xchain_post_tx ( ret_val : *mut sgx_status_t,
+        req: *const u8,
+        req_size: usize,
+    ) -> sgx_status_t;
+
+    pub fn ocall_xchain_query_tx( ret_val : *mut sgx_status_t,
+                                  txid: *const u8,
+                                  txid_size: usize,
+                                  output: *mut *mut sgx_libc::c_void,
+                                  output_size: *mut usize,
+    ) -> sgx_status_t;
+
+    pub fn ocall_xchain_pre_exec( ret_val : *mut sgx_status_t,
+        req: *const u8,
+        req_size: usize,
+        output: *mut *mut sgx_libc::c_void,
+        output_size: *mut usize,
+    ) -> sgx_status_t;
 }
 
 #[no_mangle]
-pub extern "C" fn ecall_run_tests() {
-    //wheel::tests::run_tests();
+pub extern "C" fn ecall_run_tests() -> sgx_status_t {
     let mut rt : sgx_status_t = sgx_status_t::SGX_ERROR_UNEXPECTED;
 
-    let res = unsafe {
-        init(&mut rt as *mut sgx_status_t, ptr::null(), 0, ptr::null(), 0, 1)
-    };
+    let bcname = String::from("xuper");
+    let host = config::CONFIG.read().unwrap().node.clone();
+    let port = config::CONFIG.read().unwrap().endorse_port;
 
-    //close();
-    println!("abc {}", res);
+    let res = unsafe {
+        init(&mut rt as *mut sgx_status_t,
+             bcname.as_ptr() as * const u8,
+             bcname.len(),
+             host.as_ptr() as * const u8,
+             host.len(),
+             port)
+    };
+    match res {
+        sgx_status_t::SGX_SUCCESS => {
+            match rt {
+                sgx_status_t::SGX_SUCCESS => {
+                    println!("init xchainClient success");
+                },
+                _ => {
+                    println!("init xchainClient failed");
+                    return sgx_status_t::SGX_ERROR_UNEXPECTED
+                }
+            }
+        },
+        _ => {
+            println!("init xchainClient failed");
+            return sgx_status_t::SGX_ERROR_UNEXPECTED
+        }
+    }
+
+    wallet::test_load_account();
+    transfer::test_transfer();
+    contract::test_contract();
+    contract::test_query();
+
+    unsafe {
+        close();
+    }
+
+    println!("passed all tests");
+    sgx_status_t::SGX_SUCCESS
 }

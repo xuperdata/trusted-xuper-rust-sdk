@@ -5119,16 +5119,18 @@ pub struct Transaction {
     pub timestamp: i64,
     pub version: i32,
     pub autogen: bool,
+    #[serde(default)]
     pub tx_inputs_ext: ::protobuf::RepeatedField<TxInputExt>,
+    #[serde(default)]
     pub tx_outputs_ext: ::protobuf::RepeatedField<TxOutputExt>,
-    #[serde(skip_serializing_if = "crate::encoder::is_empty")]
+    #[serde(skip_serializing_if = "crate::encoder::is_empty", default)]
     pub contract_requests: ::protobuf::RepeatedField<InvokeRequest>,
     pub initiator: ::std::string::String,
-    #[serde(skip_serializing_if = "crate::encoder::is_empty")]
+    #[serde(skip_serializing_if = "crate::encoder::is_empty", default)]
     pub auth_require: ::protobuf::RepeatedField<::std::string::String>,
-    #[serde(skip_serializing_if = "crate::encoder::is_empty")]
+    #[serde(skip_serializing_if = "crate::encoder::is_empty", default)]
     pub initiator_signs: ::protobuf::RepeatedField<SignatureInfo>,
-    #[serde(skip_serializing_if = "crate::encoder::is_empty")]
+    #[serde(skip_serializing_if = "crate::encoder::is_empty", default)]
     pub auth_require_signs: ::protobuf::RepeatedField<SignatureInfo>,
     pub received_timestamp: i64,
     pub xuper_sign: ::protobuf::SingularPtrField<XuperSignature>,
