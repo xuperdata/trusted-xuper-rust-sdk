@@ -1,14 +1,14 @@
-use std::prelude::v1::*;
 use super::config;
-use crate::{session, wallet};
-use crate::protos;
 use crate::errors::{Error, ErrorKind, Result};
+use crate::protos;
+use crate::{session, wallet};
+use std::prelude::v1::*;
 extern crate sgx_types;
-use sgx_types::*;
-use std::slice;
-use std::path::PathBuf;
 use crate::protos::xchain;
+use sgx_types::*;
 use std::collections::HashMap;
+use std::path::PathBuf;
+use std::slice;
 
 /// account在chain上面给to转账amount，小费是fee，留言是des, ocallc
 pub fn invoke_contract(
@@ -122,26 +122,41 @@ pub fn query_contract(
     invoke_rpc_request.set_initiator(account.address.to_owned());
     invoke_rpc_request.set_auth_require(protobuf::RepeatedField::from_vec(auth_requires.clone()));
 
-    let mut rt : sgx_status_t = sgx_status_t::SGX_ERROR_UNEXPECTED;
+    let mut rt: sgx_status_t = sgx_status_t::SGX_ERROR_UNEXPECTED;
     let req = serde_json::to_string(&invoke_rpc_request)?;
 
     let mut output = 0 as *mut sgx_libc::c_void;
     let mut out_len: usize = 0;
     let resp = unsafe {
-        crate::ocall_xchain_pre_exec(&mut rt,
-                                     req.as_ptr() as *const u8,
-                                     req.len(),
-                                     &mut output,
-                                     &mut out_len)
+        crate::ocall_xchain_pre_exec(
+            &mut rt,
+            req.as_ptr() as *const u8,
+            req.len(),
+            &mut output,
+            &mut out_len,
+        )
     };
 
     if resp != sgx_status_t::SGX_SUCCESS || rt != sgx_status_t::SGX_SUCCESS {
-        println!("[-] query_contract ocall_xchain_pre_exec failed: {}, {}!", resp.as_str(), rt.as_str());
+        println!(
+            "[-] query_contract ocall_xchain_pre_exec failed: {}, {}!",
+            resp.as_str(),
+            rt.as_str()
+        );
         return Err(Error::from(ErrorKind::InvalidArguments));
     }
+    unsafe {
+        if sgx_types::sgx_is_outside_enclave(output, out_len) == 0 {
+            println!("[-] alloc error");
+            return Err(Error::from(ErrorKind::InvalidArguments));
+        }
+    }
+
     let resp_slice = unsafe { slice::from_raw_parts(output as *mut u8, out_len) };
     let invoke_rpc_resp: xchain::InvokeRPCResponse = serde_json::from_slice(&resp_slice).unwrap();
-    unsafe { crate::ocall_free(output); }
+    unsafe {
+        crate::ocall_free(output);
+    }
     Ok(invoke_rpc_resp)
 }
 
@@ -165,21 +180,28 @@ pub fn test_contract() {
     assert_eq!(txid.is_ok(), true);
     let txid = txid.unwrap();
 
-    let mut rt : sgx_status_t = sgx_status_t::SGX_ERROR_UNEXPECTED;
+    let mut rt: sgx_status_t = sgx_status_t::SGX_ERROR_UNEXPECTED;
     let mut output = 0 as *mut sgx_libc::c_void;
     let mut out_len: usize = 0;
     let res = unsafe {
-        crate::ocall_xchain_query_tx(&mut rt,
-                                     txid.as_ptr() as * const u8,
-                                     txid.len(),
-                                     &mut output,
-                                     &mut out_len)
+        crate::ocall_xchain_query_tx(
+            &mut rt,
+            txid.as_ptr() as *const u8,
+            txid.len(),
+            &mut output,
+            &mut out_len,
+        )
     };
     assert_eq!(res, sgx_status_t::SGX_SUCCESS);
     assert_eq!(rt, sgx_status_t::SGX_SUCCESS);
+    unsafe {
+        assert_ne!(sgx_types::sgx_is_outside_enclave(output, out_len), 0);
+    }
     let resp_slice = unsafe { slice::from_raw_parts(output as *mut u8, out_len) };
-    let result:xchain::TxStatus = serde_json::from_slice(resp_slice).unwrap();
-    unsafe{ crate::ocall_free(output); }
+    let result: xchain::TxStatus = serde_json::from_slice(resp_slice).unwrap();
+    unsafe {
+        crate::ocall_free(output);
+    }
     println!("{:?}", result);
     println!("invoke contract test passed");
 }

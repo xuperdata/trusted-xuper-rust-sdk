@@ -1,12 +1,12 @@
-use std::prelude::v1::*;
-use crate::{config, consts, session, wallet};
-use crate::protos;
 use crate::errors::{Error, ErrorKind, Result};
+use crate::protos;
+use crate::{config, consts, session, wallet};
+use std::prelude::v1::*;
 extern crate sgx_types;
-use sgx_types::*;
-use std::slice;
-use std::path::PathBuf;
 use crate::protos::xchain;
+use sgx_types::*;
+use std::path::PathBuf;
+use std::slice;
 
 /// account在chain上面给to转账amount，小费是fee，留言是desc
 pub fn transfer(
@@ -94,21 +94,28 @@ pub fn test_transfer() {
     let txid = res.unwrap();
     println!("txid: {:?}", txid);
 
-    let mut rt : sgx_status_t = sgx_status_t::SGX_ERROR_UNEXPECTED;
+    let mut rt: sgx_status_t = sgx_status_t::SGX_ERROR_UNEXPECTED;
     let mut output = 0 as *mut sgx_libc::c_void;
     let mut out_len: usize = 0;
     let res = unsafe {
-        crate::ocall_xchain_query_tx(&mut rt,
-                                    txid.as_ptr() as * const u8,
-                                    txid.len(),
-                                    &mut output,
-                                    &mut out_len)
+        crate::ocall_xchain_query_tx(
+            &mut rt,
+            txid.as_ptr() as *const u8,
+            txid.len(),
+            &mut output,
+            &mut out_len,
+        )
     };
     assert_eq!(res, sgx_status_t::SGX_SUCCESS);
     assert_eq!(rt, sgx_status_t::SGX_SUCCESS);
+    unsafe {
+        assert_ne!(sgx_types::sgx_is_outside_enclave(output, out_len), 0);
+    }
     let resp_slice = unsafe { slice::from_raw_parts(output as *mut u8, out_len) };
-    let result:xchain::TxStatus = serde_json::from_slice(resp_slice).unwrap();
-    unsafe{ crate::ocall_free(output); }
+    let result: xchain::TxStatus = serde_json::from_slice(resp_slice).unwrap();
+    unsafe {
+        crate::ocall_free(output);
+    }
     println!("{:?}", result);
     println!("transfer test passed");
 }

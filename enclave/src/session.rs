@@ -1,15 +1,15 @@
-use std::prelude::v1::*;
-use std::ops::AddAssign;
-use std::ops::Sub;
-use std::slice;
+use super::config;
+use crate::encoder;
+use crate::errors::{Error, ErrorKind, Result};
+use crate::protos::{xchain, xendorser};
 use num_bigint;
 use num_traits;
 use num_traits::cast::FromPrimitive;
 use serde_json;
-use super::config;
-use crate::encoder;
-use crate::protos::{xchain, xendorser};
-use crate::errors::{Error, ErrorKind, Result};
+use std::ops::AddAssign;
+use std::ops::Sub;
+use std::prelude::v1::*;
+use std::slice;
 extern crate sgx_types;
 use sgx_types::*;
 
@@ -60,23 +60,36 @@ impl<'a, 'b, 'c> Session<'a, 'b, 'c> {
         endorser_request.set_BcName(self.chain_name.to_owned());
         endorser_request.set_RequestData(request_data.into_bytes());
 
-        let mut rt : sgx_status_t = sgx_status_t::SGX_ERROR_UNEXPECTED;
+        let mut rt: sgx_status_t = sgx_status_t::SGX_ERROR_UNEXPECTED;
         let req = serde_json::to_string(&endorser_request)?;
 
         let mut output = 0 as *mut sgx_libc::c_void;
         let mut out_len: usize = 0;
         let resp = unsafe {
-            crate::ocall_xchain_endorser_call(&mut rt,
-                                       req.as_ptr() as *const u8,
-                                       req.len(),
-                                       &mut output,
-                                       &mut out_len)
+            crate::ocall_xchain_endorser_call(
+                &mut rt,
+                req.as_ptr() as *const u8,
+                req.len(),
+                &mut output,
+                &mut out_len,
+            )
         };
 
         if resp != sgx_status_t::SGX_SUCCESS || rt != sgx_status_t::SGX_SUCCESS {
-            println!("[-] pre_exec_with_select_utxo ocall_xchain_endorser_call failed: {}, {}!", resp.as_str(), rt.as_str());
+            println!(
+                "[-] pre_exec_with_select_utxo ocall_xchain_endorser_call failed: {}, {}!",
+                resp.as_str(),
+                rt.as_str()
+            );
             return Err(Error::from(ErrorKind::InvalidArguments));
         }
+        unsafe {
+            if sgx_types::sgx_is_outside_enclave(output, out_len) == 0 {
+                println!("[-] alloc error");
+                return Err(Error::from(ErrorKind::InvalidArguments));
+            }
+        }
+
         let resp_slice = unsafe { slice::from_raw_parts(output as *mut u8, out_len) };
         let endorser_resp: xendorser::EndorserResponse = serde_json::from_slice(&resp_slice)?;
         let pre_exec_with_select_utxo_resp: xchain::PreExecWithSelectUTXOResponse =
@@ -86,7 +99,9 @@ impl<'a, 'b, 'c> Session<'a, 'b, 'c> {
                 .get_response()
                 .get_responses(),
         )?;
-        unsafe { crate::ocall_free(output); }
+        unsafe {
+            crate::ocall_free(output);
+        }
         Ok(pre_exec_with_select_utxo_resp)
     }
 
@@ -287,26 +302,41 @@ impl<'a, 'b, 'c> Session<'a, 'b, 'c> {
         endorser_request.set_Fee(fee.clone());
         endorser_request.set_RequestData(request_data.into_bytes());
 
-        let mut rt : sgx_status_t = sgx_status_t::SGX_ERROR_UNEXPECTED;
+        let mut rt: sgx_status_t = sgx_status_t::SGX_ERROR_UNEXPECTED;
         let req = serde_json::to_string(&endorser_request)?;
 
         let mut output = 0 as *mut sgx_libc::c_void;
         let mut out_len: usize = 0;
         let resp = unsafe {
-            crate::ocall_xchain_endorser_call(&mut rt,
-                                       req.as_ptr() as *const u8,
-                                       req.len(),
-                                       &mut output,
-                                       &mut out_len)
+            crate::ocall_xchain_endorser_call(
+                &mut rt,
+                req.as_ptr() as *const u8,
+                req.len(),
+                &mut output,
+                &mut out_len,
+            )
         };
 
         if resp != sgx_status_t::SGX_SUCCESS || rt != sgx_status_t::SGX_SUCCESS {
-            println!("[-] compliance_check ocall_xchain_endorser_call failed: {}, {}!", resp.as_str(), rt.as_str());
+            println!(
+                "[-] compliance_check ocall_xchain_endorser_call failed: {}, {}!",
+                resp.as_str(),
+                rt.as_str()
+            );
             return Err(Error::from(ErrorKind::InvalidArguments));
         }
+        unsafe {
+            if sgx_types::sgx_is_outside_enclave(output, out_len) == 0 {
+                println!("[-] alloc error");
+                return Err(Error::from(ErrorKind::InvalidArguments));
+            }
+        }
+
         let resp_slice = unsafe { slice::from_raw_parts(output as *mut u8, out_len) };
         let result: xendorser::EndorserResponse = serde_json::from_slice(resp_slice).unwrap();
-        unsafe { crate::ocall_free(output); }
+        unsafe {
+            crate::ocall_free(output);
+        }
         Ok(result.EndorserSign.unwrap())
     }
 
@@ -321,17 +351,18 @@ impl<'a, 'b, 'c> Session<'a, 'b, 'c> {
         tx.auth_require_signs.push(end_sign);
         tx.set_txid(encoder::make_transaction_id(&tx)?);
 
-        let mut rt : sgx_status_t = sgx_status_t::SGX_ERROR_UNEXPECTED;
+        let mut rt: sgx_status_t = sgx_status_t::SGX_ERROR_UNEXPECTED;
         let tran = serde_json::to_string(&tx)?;
 
-        let resp = unsafe {
-            crate::ocall_xchain_post_tx( &mut rt,
-                                         tran.as_ptr() as *const u8,
-                                         tran.len())
-        };
+        let resp =
+            unsafe { crate::ocall_xchain_post_tx(&mut rt, tran.as_ptr() as *const u8, tran.len()) };
 
         if resp != sgx_status_t::SGX_SUCCESS || rt != sgx_status_t::SGX_SUCCESS {
-            println!("[-] ocall_xchain_post_tx failed: {}, {}!", resp.as_str(), rt.as_str());
+            println!(
+                "[-] ocall_xchain_post_tx failed: {}, {}!",
+                resp.as_str(),
+                rt.as_str()
+            );
             return Err(Error::from(ErrorKind::InvalidArguments));
         }
         Ok(hex::encode(tx.txid))
