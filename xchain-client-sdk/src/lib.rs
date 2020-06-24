@@ -27,6 +27,7 @@ pub mod config;
 pub mod session;
 pub mod transfer;
 pub mod wallet;
+pub mod teesdk;
 pub mod encoder;
 pub mod errors;
 

@@ -32,3 +32,7 @@ cd bin
 ./run-tests
 ```
 
+## Call KMS in TEE
+
+./trusted-mesatee-sdk
+

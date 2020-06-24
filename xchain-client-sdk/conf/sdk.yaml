@@ -1,6 +1,6 @@
 # endorseService Info
 # XuperOS addrs
-node: "180.76.186.53"
+node: "180.76.57.245"
 nodePort: 37101
 endorsePort: 37101
 complianceCheck:

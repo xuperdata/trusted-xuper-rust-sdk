@@ -13,6 +13,27 @@ use sgx_types::*;
 
 use std::path::PathBuf;
 
+#[macro_use]
+extern crate lazy_static;
+
+use hex;
+use mesatee_sdk::{Mesatee, MesateeEnclaveInfo, MesateeTask};
+use std::net::SocketAddr;
+use xchain_client_sdk::teesdk;
+
+lazy_static! {
+    static ref OWNER: String = String::from("dy9UjyBbELfdWHZFUNXkdaaCmTWLkUeyy");
+    static ref USER: String = String::from("ZsPy7eELS55MXALUhAynUtjsxjeKFbwqy");
+    static ref USER_ID: String = String::from("user1");
+    static ref USER_TOKEN: String = String::from("token1");
+    static ref FNS_ADDR: SocketAddr = "127.0.0.1:8082".parse().unwrap();
+    static ref PUBKEY_PATH: String = String::from("/teaclave/keys/auditors/godzilla/godzilla.public.der");
+    static ref SIG_PATH: String = String::from("/teaclave/keys/auditors/godzilla/godzilla.sign.sha256");
+    static ref ENCLAVE_PATH: String = String::from("/teaclave/release/services/enclave_info.toml");
+    static ref PLAIN1: String = String::from("25");
+    static ref PLAIN2: String = String::from("12");
+    static ref ADDITION: String = String::from("37");
+}
 
 #[no_mangle]
 pub extern "C" fn ecall_run_tests() -> sgx_status_t {
@@ -37,10 +58,11 @@ pub extern "C" fn ecall_run_tests() -> sgx_status_t {
     }
     println!("init xchainClient success");
 
-    test_load_account();
+//    test_load_account();
     test_transfer();
     test_contract();
     test_query();
+    test_trust_function();
 
     unsafe {
         xchain_client_sdk::close();
@@ -49,7 +71,6 @@ pub extern "C" fn ecall_run_tests() -> sgx_status_t {
     println!("passed all tests");
     sgx_status_t::SGX_SUCCESS
 }
-
 
 fn test_load_account() {
     let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
@@ -174,3 +195,177 @@ pub fn test_query() {
     println!("contract query test passed");
 }
 
+fn test_trust_function() {
+    // initialize parameters
+    println!("***init parameters***");
+    
+    let mut auditors: Vec<(&str, &str)> = Vec::new();
+    auditors.push((&PUBKEY_PATH, &SIG_PATH));
+    let enclave_info: MesateeEnclaveInfo =
+        MesateeEnclaveInfo::load(auditors, &ENCLAVE_PATH).unwrap();
+    let mesatee: Mesatee = Mesatee::new(&enclave_info, &USER_ID, &USER_TOKEN, *FNS_ADDR).unwrap();
+    let cipher1: &str;
+    let cipher2: &str;
+    let cipher_add: &str;
+    let commitment1: &str;
+    let commitment2: &str;
+
+    // load account
+    let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    d.push("key/private.key");
+    let acc = xchain_client_sdk::wallet::Account::new(d.to_str().unwrap(), "counter", "XC1111111111000000@xuper");
+    println!("{:?}", acc);
+    let address = include_str!("../key/address");
+    assert_eq!(acc.address, address);
+    println!("load account test passed");
+
+    // test encryption
+    println!("***test encryption***");
+    let mut args = teesdk::EncDecIO {
+        key: PLAIN1.to_string(),
+    };
+    let args_str = serde_json::to_string(&args).unwrap();
+    let mut args = String::from("encrypt");
+    args.push_str(&args_str);
+    println!("msg: {}", &args);
+    
+    let sig = acc.sign(args.as_bytes()).unwrap();
+    let sig_hex = hex::encode(sig);
+    let pubkey_hex = "04a24cf1352cd8d21be0567ce730cc9a78f5269d2eeabc44e5cb7aa01cd76ac50c0157f847b864048021d9116dc799b1c4659aeffb5606c4b28801b287eb709de8";
+    let result = teesdk::submit(&mesatee, "xchaintf", "encrypt", &args_str, 0, &OWNER, &pubkey_hex, &sig_hex);
+    println!("{:?}", result);
+    assert_eq!(result.is_ok(), true);
+
+    let res: teesdk::EncDecIO = serde_json::from_str(&result.unwrap()).unwrap();
+    cipher1 = &res.key;
+    println!("cipher1: {:?}", cipher1);
+/*
+    let mut args = teesdk::EncDecIO {
+        key: PLAIN2.to_string(),
+    };
+    let args_str = serde_json::to_string(&args).unwrap();
+    let result = teesdk::submit(&mesatee, "xchaintf", "encrypt", &args_str, 0, &OWNER);
+    assert_eq!(result.is_ok(), true);
+    let res: teesdk::EncDecIO = serde_json::from_str(&result.ok().unwrap()).unwrap();
+    cipher2 = &res.key;
+    println!("cipher2: {:?}", cipher2);
+
+    // test decryption
+    println!("***test decryption***");
+    let mut args = teesdk::EncDecIO {
+        key: String::from(cipher1),
+    };
+    let args_str = serde_json::to_string(&args).unwrap();
+    let result = teesdk::submit(&mesatee, "xchaintf", "decrypt", &args_str, 0, &OWNER);
+    assert_eq!(result.is_ok(), true);
+    let res: teesdk::EncDecIO = serde_json::from_str(&result.unwrap()).unwrap();
+    let plain1_decrypted = &res.key;
+    println!("decrypted plain1: {:?}", &plain1_decrypted);
+    assert_eq!(plain1_decrypted, &PLAIN1.to_string());
+
+    let mut args = teesdk::EncDecIO {
+        key: String::from(cipher2),
+    };
+    let args_str = serde_json::to_string(&args).unwrap();
+    let result = teesdk::submit(&mesatee, "xchaintf", "decrypt", &args_str, 0, &OWNER);
+    assert_eq!(result.is_ok(), true);
+    let res: teesdk::EncDecIO = serde_json::from_str(&result.unwrap()).unwrap();
+    let plain2_decrypted = &res.key;
+    println!("decrypted plain2: {:?}", &plain2_decrypted);
+    assert_eq!(plain2_decrypted, &PLAIN2.to_string());
+*/
+/*
+    // test addition
+    println!("***test addition by owner***");
+    let mut args = teesdk::BinaryIn {
+        l: String::from(cipher1),
+        r: String::from(cipher2),
+        o: String::from("key"),
+    };
+    let args_str = serde_json::to_string(&args).unwrap();
+    let result = teesdk::submit(&mesatee, "xchaintf", "add", &args_str, 0, &OWNER);
+    assert_eq!(result.is_ok(), true);
+    let res: teesdk::EncDecIO = serde_json::from_str(&result.unwrap()).unwrap();
+    let cipher = &res.key;
+    println!("cipher_add: {:?}", cipher);
+
+    let mut args = teesdk::EncDecIO {
+        key: String::from(cipher),
+    };
+    let args_str = serde_json::to_string(&args).unwrap();
+    let result = teesdk::submit(&mesatee, "xchaintf", "decrypt", &args_str, 0, &OWNER);
+    assert_eq!(result.is_ok(), true);
+    let res: teesdk::CommitOut = serde_json::from_str(&result.unwrap()).unwrap();
+    let plain_add = &res.key;
+    println!("plain_add: {:?}", plain_add);
+    assert_eq!(plain_add, ADDITION.to_string());
+
+
+    // test authorization
+    println!("***test authorization***")
+    let mut args = teesdk::CommitIn {
+        ciphertext: String::from(cipher1),
+        to: USER.to_string(),
+        kind: String::from("commitment"),
+    };
+    let args_str = serde_json::to_string(&args).unwrap();
+    let result = teesdk::submit(
+        &mesatee,
+        "xchaintf",
+        "authorize",
+        &args_str,
+        0,
+        &OWNER,
+    );
+    assert_eq!(result.is_ok(), true);
+    let res: teesdk::CommitOut = serde_json::from_str(&result.unwrap()).unwrap();
+    commitment1 = &res.commitment;
+    println!("commiement1: {:?}", commitment1);
+
+    let mut args = teesdk::CommitIn {
+        ciphertext: String::from(cipher2),
+        to: USER.to_string(),
+        kind: String::from("commitment"),
+    };
+    let args_str = serde_json::to_string(&args).unwrap();
+    let result = teesdk::submit(
+        &mesatee,
+        "xchaintf",
+        "authorize",
+        &args_str,
+        0,
+        &OWNER,
+    );
+    assert_eq!(result.is_ok(), true);
+    let res: teesdk::CommitOut = serde_json::from_str(&result.unwrap()).unwrap();
+    commitment2 = &res.commitment;
+    println!("commitment2: {:?}", commitment2);
+
+    // test addition by user
+    println!("***test addition by user***")
+    let mut args = teesdk::BinaryIn {
+        l: String::from(cipher1),
+        r: String::from(cipher2),
+        o: String::from("key"),
+        commitment: String::from(commitment1),
+        commitment2: String::from(commitment2),
+    };
+    let args_str = serde_json::to_string(&args).unwrap();
+    let result = teesdk::submit(&mesatee, "xchaintf", "add", &args_str, 0, &USER);
+    assert_eq!(result.is_ok(), true);
+    let res: teesdk::EncDecIO = serde_json::from_str(&result.unwrap()).unwrap();
+    cipher_add = &res.key;
+    println!("cipher_add: {:?}", cipher_add);
+
+    let mut args = teesdk::EncDecIO {
+        key: String::from(cipher_add),
+    };
+    let args_str = serde_json::to_string(&args).unwrap();
+    let result = teesdk::submit(&mesatee, "xchaintf", "decrypt", &args_str, 0, &USER);
+    assert_eq!(result.is_ok(), true);
+    let res: teesdk::CommitOut = serde_json::from_str(&result.unwrap()).unwrap();
+    let plain_add = &res.key;
+    println!("plain_add: {:?}", plain_add);
+    assert_eq!(plain_add, ADDITION.to_string());
+*/
+}

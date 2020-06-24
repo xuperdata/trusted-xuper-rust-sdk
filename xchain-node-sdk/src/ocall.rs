@@ -3,11 +3,7 @@ use crate::xchain::XChainClient;
 use std::slice;
 use std::sync::atomic::{AtomicPtr, Ordering};
 
-#[allow(non_camel_case_types)]
-pub enum sgx_status_t {
-    SGX_SUCCESS,
-    SGX_ERROR_UNEXPECTED,
-}
+use sgx_types::sgx_status_t;
 
 pub static CLI: AtomicPtr<()> = AtomicPtr::new(0 as *mut ());
 
