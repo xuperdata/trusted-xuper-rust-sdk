@@ -18,12 +18,12 @@ XuperChain 3.7
 In protos/xchain.rs and protos/xendorser.rs:
 * Serialize enum as number: https://serde.rs/enum-number.html
 * #[serde(default)]
-* crate::wallet::* 
+* crate::wallet::*
 
 
 ## Test
 
-Install SGX 2.9: [Here](https://github.com/xuperdata/mesatee-core-standalone/blob/master/docs/SGX2.9.1%E5%8D%87%E7%BA%A7%E6%8C%87%E5%8D%97.md)
+Install SGX 2.9.1: [Here](https://github.com/xuperdata/mesatee-core-standalone/blob/master/docs/SGX2.9.1%E5%8D%87%E7%BA%A7%E6%8C%87%E5%8D%97.md)
 
 ```
 cd sdk-sgx-test
