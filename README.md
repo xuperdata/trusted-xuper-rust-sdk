@@ -34,5 +34,5 @@ cd bin
 
 ## Call KMS in TEE
 
-./trusted-mesatee-sdk
+Import [trusted-mesatee-sdk](./trusted-mesatee-sdk) in your project. 
 
