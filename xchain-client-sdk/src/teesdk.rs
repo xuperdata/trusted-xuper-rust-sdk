@@ -8,7 +8,16 @@ pub struct EncDecIO {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct CommitIn {
+pub struct BinaryOpIn {
+    pub l: String,
+    pub r: String,
+    pub o: String,
+    pub commitment: String,
+    pub commitment2: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct AuthorizeIn {
     pub ciphertext: String,
     pub to: String,
     pub kind: String,
@@ -20,12 +29,8 @@ pub struct CommitOut {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct BinaryIn {
-    pub l: String,
-    pub r: String,
-    pub o: String,
-    pub commitment: String,
-    pub commitment2: String,
+pub struct ShareOut {
+    pub cipher: String,
 }
 
 #[derive(Serialize, Deserialize, Debug)]

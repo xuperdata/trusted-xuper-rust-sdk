@@ -29,6 +29,8 @@ Install SGX 2.9.1: [Here](https://github.com/xuperdata/mesatee-core-standalone/b
 cd sdk-sgx-test
 make
 cd bin
+export IAS_SPID=xxxx
+export IAS_KEY=xxx
 ./run-tests
 ```
 
