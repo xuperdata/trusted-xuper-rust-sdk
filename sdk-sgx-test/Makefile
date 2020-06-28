@@ -40,8 +40,8 @@ endif
 
 CUSTOM_LIBRARY_PATH := ./lib
 CUSTOM_BIN_PATH := ./bin
-CUSTOM_EDL_PATH := ./enclave/edl
-CUSTOM_COMMON_PATH := ./enclave/common
+CUSTOM_EDL_PATH := ../xchain-client-sdk/edl
+CUSTOM_COMMON_PATH := ../xchain-client-sdk/common
 
 ######## EDL Settings ########
 
