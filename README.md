@@ -23,8 +23,11 @@ In protos/xchain.rs and protos/xendorser.rs:
 
 ## Test
 
-Install SGX 2.9.1: [Here](https://github.com/xuperdata/mesatee-core-standalone/blob/master/docs/SGX2.9.1%E5%8D%87%E7%BA%A7%E6%8C%87%E5%8D%97.md)
+1、Install SGX 2.9.1: [Here](https://github.com/xuperdata/mesatee-core-standalone/blob/master/docs/SGX2.9.1%E5%8D%87%E7%BA%A7%E6%8C%87%E5%8D%97.md)
 
+2、sdk-sgx-test/enclave/src/lib.rs测试文件中的全局变量PUBKEY_PATH、SIG_PATH、ENCLAVE_PATH按照具体情况填写。
+
+3、make and run tests
 ```
 cd sdk-sgx-test
 make
