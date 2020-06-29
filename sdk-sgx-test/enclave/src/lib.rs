@@ -17,6 +17,7 @@ use std::path::PathBuf;
 extern crate lazy_static;
 
 use hex;
+#[cfg(feature = "mesatee-sdk")]
 use mesatee_sdk::{Mesatee, MesateeEnclaveInfo};
 use std::net::SocketAddr;
 use xchain_client_sdk::teesdk;
@@ -62,6 +63,8 @@ pub extern "C" fn ecall_run_tests() -> sgx_status_t {
     test_transfer();
     test_contract();
     test_query();
+
+    #[cfg(feature = "mesatee-sdk")]
     test_trust_function();
 
     unsafe {
@@ -195,6 +198,7 @@ pub fn test_query() {
     println!("contract query test passed");
 }
 
+#[cfg(feature = "mesatee-sdk")]
 fn test_trust_function() {
     // initialize parameters
     println!("***init parameters***");
