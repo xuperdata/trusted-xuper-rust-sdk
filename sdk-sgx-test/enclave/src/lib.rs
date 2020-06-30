@@ -28,9 +28,9 @@ lazy_static! {
     static ref USER_ID: String = String::from("user1");
     static ref USER_TOKEN: String = String::from("token1");
     static ref FNS_ADDR: SocketAddr = "127.0.0.1:8082".parse().unwrap();
-    static ref PUBKEY_PATH: String = String::from("/trusted-xuper-rust-sdk/trusted-mesatee-sdk/release/services/auditors/godzilla/godzilla.public.der");
-    static ref SIG_PATH: String = String::from("/trusted-xuper-rust-sdk/trusted-mesatee-sdk/release/services/auditors/godzilla/godzilla.sign.sha256");
-    static ref ENCLAVE_PATH: String = String::from("/trusted-xuper-rust-sdk/trusted-mesatee-sdk/release/services/enclave_info.toml");
+    static ref PUBKEY_PATH: String = String::from("auditors/godzilla/godzilla.public.der");
+    static ref SIG_PATH: String = String::from("auditors/godzilla/godzilla.sign.sha256");
+    static ref ENCLAVE_PATH: String = String::from("enclave_info.toml");
     static ref PLAIN1: String = String::from("25");
     static ref PLAIN2: String = String::from("12");
     static ref ADDITION: String = String::from("37");

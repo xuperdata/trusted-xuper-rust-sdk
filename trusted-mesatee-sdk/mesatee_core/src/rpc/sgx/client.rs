@@ -21,6 +21,7 @@ use teaclave_attestation::verifier::SgxQuoteVerifier;
 
 #[cfg(feature = "mesalock_sgx")]
 use sgx_types::sgx_sha256_hash_t;
+
 #[cfg(not(feature = "mesalock_sgx"))]
 use std::sync::RwLock;
 #[cfg(feature = "mesalock_sgx")]
@@ -38,19 +39,22 @@ lazy_static! {
 // We use sha256 of private_key as the identity of current enclave.
 // The config cache is organized by a hashmap, in which the target
 // enclave_attr is the key.
+/*
 #[cfg(feature = "mesalock_sgx")]
 #[derive(Default)]
 struct ClientConfigCache {
     private_key_sha256: sgx_sha256_hash_t,
     target_configs: HashMap<Arc<SgxQuoteVerifier>, Arc<rustls::ClientConfig>>,
 }
+*/
 
-#[cfg(not(feature = "mesalock_sgx"))]
+#[cfg(feature = "mesalock_sgx")]
 #[derive(Default)]
 struct ClientConfigCache {
     target_configs: HashMap<Arc<SgxQuoteVerifier>, Arc<rustls::ClientConfig>>,
 }
 
+/*
 #[cfg(feature = "mesalock_sgx")]
 pub(crate) fn get_tls_config(server_verifier: Arc<SgxQuoteVerifier>) -> Arc<rustls::ClientConfig> {
     use crate::rpc::sgx::ra::get_current_ra_credential;
@@ -91,8 +95,9 @@ pub(crate) fn get_tls_config(server_verifier: Arc<SgxQuoteVerifier>) -> Arc<rust
 
     final_arc
 }
+*/
 
-#[cfg(not(feature = "mesalock_sgx"))]
+#[cfg(feature = "mesalock_sgx")]
 pub(crate) fn get_tls_config(server_verifier: Arc<SgxQuoteVerifier>) -> Arc<rustls::ClientConfig> {
     if let Ok(cfg_cache) = CLIENT_CONFIG_CACHE.try_read() {
         if let Some(cfg) = cfg_cache.target_configs.get(&server_verifier) {

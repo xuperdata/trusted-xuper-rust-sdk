@@ -82,7 +82,7 @@ fn load_presigned_enclave_info() -> HashMap<String, EnclaveMeasurement> {
 
 lazy_static! {
     static ref RUNTIME_CONFIG: Option<RuntimeConfig> =
-        RuntimeConfig::from_toml("/trusted-xuper-rust-sdk/trusted-mesatee-sdk/release/services/runtime.config.toml");
+        RuntimeConfig::from_toml("runtime.config.toml");
     static ref ENCLAVE_IDENTITIES: HashMap<String, EnclaveMeasurement> =
         load_presigned_enclave_info();
 }
