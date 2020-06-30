@@ -17,6 +17,7 @@ use std::path::PathBuf;
 extern crate lazy_static;
 
 use hex;
+#[cfg(feature = "mesatee-sdk")]
 use mesatee_sdk::{Mesatee, MesateeEnclaveInfo};
 use std::net::SocketAddr;
 use xchain_client_sdk::teesdk;
@@ -27,9 +28,9 @@ lazy_static! {
     static ref USER_ID: String = String::from("user1");
     static ref USER_TOKEN: String = String::from("token1");
     static ref FNS_ADDR: SocketAddr = "127.0.0.1:8082".parse().unwrap();
-    static ref PUBKEY_PATH: String = String::from("/trusted-xuper-rust-sdk/trusted-mesatee-sdk/release/services/auditors/godzilla/godzilla.public.der");
-    static ref SIG_PATH: String = String::from("/trusted-xuper-rust-sdk/trusted-mesatee-sdk/release/services/auditors/godzilla/godzilla.sign.sha256");
-    static ref ENCLAVE_PATH: String = String::from("/trusted-xuper-rust-sdk/trusted-mesatee-sdk/release/services/enclave_info.toml");
+    static ref PUBKEY_PATH: String = String::from("auditors/godzilla/godzilla.public.der");
+    static ref SIG_PATH: String = String::from("auditors/godzilla/godzilla.sign.sha256");
+    static ref ENCLAVE_PATH: String = String::from("enclave_info.toml");
     static ref PLAIN1: String = String::from("25");
     static ref PLAIN2: String = String::from("12");
     static ref ADDITION: String = String::from("37");
@@ -62,6 +63,8 @@ pub extern "C" fn ecall_run_tests() -> sgx_status_t {
     test_transfer();
     test_contract();
     test_query();
+
+    #[cfg(feature = "mesatee-sdk")]
     test_trust_function();
 
     unsafe {
@@ -195,6 +198,7 @@ pub fn test_query() {
     println!("contract query test passed");
 }
 
+#[cfg(feature = "mesatee-sdk")]
 fn test_trust_function() {
     // initialize parameters
     println!("***init parameters***");
