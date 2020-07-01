@@ -207,11 +207,6 @@ fn test_trust_function() {
     let enclave_info: MesateeEnclaveInfo =
         MesateeEnclaveInfo::load(auditors, &ENCLAVE_PATH).unwrap();
     let mesatee: Mesatee = Mesatee::new(&enclave_info, &USER_ID, &USER_TOKEN, *FNS_ADDR).unwrap();
-    let cipher1: &str;
-    let cipher2: &str;
-    let cipher_add: &str;
-    let commitment1: &str;
-    let commitment2: &str;
 
     // load account
     let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
@@ -246,7 +241,7 @@ fn test_trust_function() {
     println!("{:?}", result);
     assert_eq!(result.is_ok(), true);
     let res: teesdk::EncDecIO = serde_json::from_str(&result.unwrap()).unwrap();
-    cipher1 = &res.key;
+    let cipher1 = &res.key;
     println!("cipher1: {:?}", cipher1);
 
     // encrypt plain2 by owner
@@ -270,7 +265,7 @@ fn test_trust_function() {
     );
     assert_eq!(result.is_ok(), true);
     let res: teesdk::EncDecIO = serde_json::from_str(&result.ok().unwrap()).unwrap();
-    cipher2 = &res.key;
+    let cipher2 = &res.key;
     println!("cipher2: {:?}", cipher2);
 
     // test decryption
@@ -352,7 +347,7 @@ fn test_trust_function() {
     );
     assert_eq!(result.is_ok(), true);
     let res: teesdk::CommitOut = serde_json::from_str(&result.unwrap()).unwrap();
-    commitment1 = &res.commitment;
+    let commitment1 = &res.commitment;
     println!("commitment1: {:?}", &commitment1);
 
     // get commitment2
@@ -378,7 +373,7 @@ fn test_trust_function() {
     );
     assert_eq!(result.is_ok(), true);
     let res: teesdk::CommitOut = serde_json::from_str(&result.unwrap()).unwrap();
-    commitment2 = &res.commitment;
+    let commitment2 = &res.commitment;
     println!("commitment2: {:?}", commitment2);
 
     // test addition by user
@@ -403,7 +398,7 @@ fn test_trust_function() {
     );
     assert_eq!(result.is_ok(), true);
     let res: teesdk::EncDecIO = serde_json::from_str(&result.unwrap()).unwrap();
-    cipher_add = &res.key;
+    let cipher_add = &res.key;
     println!("cipher_add: {:?}", &cipher_add);
 
     // decrypt addition by user
