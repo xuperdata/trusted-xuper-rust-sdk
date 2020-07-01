@@ -44,6 +44,8 @@ In protos/xchain.rs and protos/xendorser.rs:
 
     You may need to modify the value of global parameters at the beginning of test file "sdk-sgx-test/enclave/src/lib.rs". "PUBKEY_PATH", "SIG_PATH" and "ENCLAVE_PATH" refer to mesacore-core-standalone/release/services directory.
 
+    You may need to modify the value of [n_worker](https://github.com/xuperdata/mesatee-core-standalone/blob/master/mesatee_services/fns/sgx_app/src/main.rs) and [TCSnum](https://github.com/xuperdata/mesatee-core-standalone/blob/master/mesatee_services/fns/sgx_trusted_lib/Enclave.config.xml) to achieve higher concurrency.
+
 3. make and run tests
 ```
 cd sdk-sgx-test
