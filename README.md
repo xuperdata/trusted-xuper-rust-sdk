@@ -15,7 +15,7 @@ A Xuperchain SDK by rust, especially for TEE(Intel SGX/ARM TZ) application.
 
 3. Mesatee-core-standalone
 
-   Follow the [instructoin](https://github.com/xuperdata/mesatee-core-standalone) to set up mesatee service.
+   Follow the [instruction](https://github.com/xuperdata/mesatee-core-standalone) to set up mesatee service.
 
 ## Function
 
