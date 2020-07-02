@@ -56,7 +56,9 @@ export IAS_KEY=xxx (only when "mesatee-sdk" is enabled)
 ./run-tests
 ```
 
-## Call KMS in TEE
+## Call TEE Function in This SDK
 
-Import [trusted-mesatee-sdk](./trusted-mesatee-sdk/mesatee_sdk) in your project. 
+We port [trusted-mesatee-sdk](./trusted-mesatee-sdk/mesatee_sdk) into enclave. In order to improve the performance, we do server verification by checking teh signer's signature of function enclave, instend of dual verification when connecting to function in enclave.  So make sure the caller enclave had been verified before calling the function. 
+
+
 
